@@ -60,6 +60,16 @@ void cameraEvents(SDL_Event * event, view * camera){	//Changes camera's zoom & o
 		camera->offset.x += event->motion.xrel;
 		camera->offset.y += event->motion.yrel;
 
+		//Map can't go out of the window
+		if(camera->offset.x < 0)
+			camera->offset.x = 0;
+		if(camera->offset.x > 1920)
+			camera->offset.x = 1920;
+		if(camera->offset.y < 0)
+			camera->offset.y = 0;
+		if(camera->offset.y > 1080)
+			camera->offset.y = 1080;
+
 		//Prevents map to keep moving since x/yrel are preserved
 		event->motion.xrel = 0;
 		event->motion.yrel = 0;
