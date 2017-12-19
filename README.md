@@ -1,2 +1,2 @@
-# free-freeciv
+# freefreeciv
 SDL turn-based strategy game
