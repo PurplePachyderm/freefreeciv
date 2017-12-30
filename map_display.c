@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "include/SDL2/SDL.h"
+#include <SDL2/SDL.h>
 #include "include/engine/map_display.h"
 
 void setRectangle(SDL_Rect * rect, int x, int y, int w, int h){
