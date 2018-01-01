@@ -19,7 +19,7 @@ int main(int argc, char** argv){
 	SDL_Window  * window;
 	SDL_Renderer * renderer;
 	SDL_CreateWindowAndRenderer(1920, 1080,
-								SDL_WINDOW_FULLSCREEN,
+								SDL_WINDOW_RESIZABLE,
             					&window,
             					&renderer);
 

@@ -3,12 +3,14 @@
 #include <SDL2/SDL.h>
 #include "include/engine/map_display.h"
 
+
 void setRectangle(SDL_Rect * rect, int x, int y, int w, int h){
 	rect->x = x;
 	rect->y = y;
 	rect->w = w;
 	rect->h = h;
 }
+
 
 
 void blitSprite(SDL_Renderer * renderer,  SDL_Surface * sprites, SDL_Texture * texture, int xSprite, int ySprite, int x, int y, int width){
@@ -23,6 +25,7 @@ void blitSprite(SDL_Renderer * renderer,  SDL_Surface * sprites, SDL_Texture * t
 }
 
 
+
 void dispMap(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
 	int x;
 	int y;
@@ -35,25 +38,71 @@ void dispMap(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites
 	SDL_RenderFillRect(renderer, &rect);
 
 		//Draw tiles
-	int grass;	//Defines which grass texture is gonna be used
+	coord sprite;	//Defines which sprite is gonna be used (see sprites reference sheet)
 	for(int i = 0; i<MAP_SIZE; i++){
         for(int j = 0; j<MAP_SIZE; j++){
-            if((i+j+1)%2 == 0){
-				grass = 3;	//See sprites reference sheet
+
+				//For coasts and corners
+			if(i == 0 || j==0 || i == MAP_SIZE-1 || j == MAP_SIZE-1){
+				x = (int) i*(TILE_SIZE*camera.zoom) + camera.offset.x;
+				y = (int) j*(TILE_SIZE*camera.zoom) + camera.offset.y;
+				width = (int) TILE_SIZE*camera.zoom + 1;
+				blitSprite(renderer, sprites, texture, 2, 25, x, y, width);	//Blits sea underneath coast
+			}
+				//Corner
+			if(i == 0 && j == 0){
+				sprite.x = 1;	//Left top corner
+				sprite.y = 29;
+			}
+			else if(i == MAP_SIZE-1 && j == 0){
+				sprite.x = 3;	//Right top corner
+				sprite.y = 29;
+			}
+			else if(i == 0 && j == MAP_SIZE-1){
+				sprite.x = 1;	//Left bottom corner
+				sprite.y = 31;
+			}
+			else if(i == MAP_SIZE-1 && j == MAP_SIZE-1){
+				sprite.x = 3;	//Right bottom corner
+				sprite.y = 31;
+			}
+				//Coast
+			else if(j == 0){
+				sprite.x = 2;	//Top coast
+				sprite.y = 29;
+			}
+			else if(i == MAP_SIZE-1){
+				sprite.x = 3;	//Right coast
+				sprite.y = 30;
+			}
+			else if(j == MAP_SIZE-1){
+				sprite.x = 2;	//Bottom coast
+				sprite.y = 31;
+			}
+			else if(i == 0){
+				sprite.x = 1;	//Left coast
+				sprite.y = 30;
+			}
+				//Inside tile
+			else if((i+j+1)%2 == 0){
+				sprite.x = 3;	//Dark grass
+				sprite.y = 1;
             }
             else{
-				grass = 4;
+				sprite.x = 4;	//Light Grass
+				sprite.y = 1;
             }
+
 
 			x = (int) i*(TILE_SIZE*camera.zoom) + camera.offset.x;
 			y = (int) j*(TILE_SIZE*camera.zoom) + camera.offset.y;
 			width = (int) TILE_SIZE*camera.zoom + 1;	//The +1 avoids 1 pixel gap between tiles on particular zoom values
-
-			blitSprite(renderer, sprites, texture, grass, 1, x, y, width);
+			blitSprite(renderer, sprites, texture, sprite.x, sprite.y, x, y, width);
         }
     }
     SDL_RenderPresent(renderer);
 }
+
 
 
 int cameraEvents(SDL_Event * event, view * camera){	//Changes camera's zoom & offset
@@ -101,10 +150,10 @@ int cameraEvents(SDL_Event * event, view * camera){	//Changes camera's zoom & of
 			event->wheel.y = 0;	//Idem
 
 			//Zoom must be between 0.2 and 5
-			if(camera->zoom < 0.2)
-				camera->zoom = 0.2;
-			if(camera->zoom > 5)
-				camera->zoom = 5;
+			if(camera->zoom < MIN_ZOOM)
+				camera->zoom = MIN_ZOOM;
+			if(camera->zoom > MAX_ZOOM)
+				camera->zoom = MAX_ZOOM;
 		}
 	}
 	return newEvent;

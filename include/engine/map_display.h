@@ -1,5 +1,7 @@
 #define TILE_SIZE 50
 #define MAP_SIZE 15
+#define MAX_ZOOM 5
+#define MIN_ZOOM 0.8
 
 
 typedef struct{
