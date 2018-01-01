@@ -3,5 +3,5 @@
 
 Required libraries (for now): SDL2, SDL_image, SDL_ttf
 
-# Credits
+### Credits
 Sprites: [Toen's Medieval Strategy](https://toen.itch.io/toens-medieval-strategy)
