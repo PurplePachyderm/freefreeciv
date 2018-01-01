@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include "include/engine/engine.h"
 #include "include/engine/map_display.h"
 
 

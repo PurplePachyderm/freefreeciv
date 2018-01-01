@@ -1,9 +1,10 @@
+#include "engine.h"
+
     //Macros
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
 #define TILE_SIZE 50
 
-#define MAP_SIZE 15
 #define MAX_ZOOM 5
 #define MIN_ZOOM 0.8
 
@@ -11,11 +12,6 @@
 
 
     //Structures
-typedef struct{
-    int x;
-    int y;
-}coord;
-
 typedef struct{
     coord offset;
     float zoom;
