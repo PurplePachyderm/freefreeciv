@@ -1,10 +1,13 @@
-#TODO Variables
+#Variables
+DISPLAY_FILES = display/map_display.c
+LIBS = -Llib -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -ljson-c
+
 
 all: freefreeciv clean
 
 #Executable
 freefreeciv:	main.o display.o
-	gcc -o freefreeciv main.o display.o -Wall -Llib -lSDL2main -lSDL2 -lSDL2_image
+	gcc -o freefreeciv main.o display.o -Wall $(LIBS)
 
 #Main
 main.o:	main.c
@@ -12,8 +15,8 @@ main.o:	main.c
 	gcc -c main.c -Wall
 
 #Display
-display.o:	display/map_display.c
-	gcc -o display.o -c display/map_display.c -Wall
+display.o:	$(DISPLAY_FILES)
+	gcc -o display.o -c $(DISPLAY_FILES) -Wall
 
 
 
