@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
-#include "include/engine/engine.h"
-#include "include/engine/map_display.h"
+
+#include "include/display/map_display.h"
+#include "include/game/structures.h"
 
 
 //Temporary main, for testing purpose only
@@ -11,7 +13,7 @@ int main(int argc, char** argv){
 
 		//Camera init
 	view camera;
-	camera.offset.x = (SCREEN_WIDTH - MAP_SIZE*TILE_SIZE) / 2;	//Centers map for 1080p screen, 20*20 map and 50px tiles
+	camera.offset.x = (SCREEN_WIDTH - MAP_SIZE*TILE_SIZE) / 2;	//Centers map
 	camera.offset.y = (SCREEN_HEIGHT - MAP_SIZE*TILE_SIZE) / 2;
 	camera.zoom = 1;
 	camera.leftClick = 0;
@@ -20,7 +22,7 @@ int main(int argc, char** argv){
 	SDL_Window  * window;
 	SDL_Renderer * renderer;
 	SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT,
-								SDL_WINDOW_FULLSCREEN,
+								SDL_WINDOW_RESIZABLE,
             					&window,
             					&renderer);
 

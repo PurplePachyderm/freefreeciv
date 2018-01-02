@@ -1,4 +1,6 @@
-#include "../engine/engine.h"
+#pragma once
+
+#include "../coord.h"
 
         //Macros
     //Units types
@@ -12,6 +14,9 @@
     //Resources types
 #define GOLD 0;
 #define WOOD 1;
+
+    //Map (TODO more sizes)
+#define MAP_SIZE 15
 
 
         //Structures
@@ -43,6 +48,7 @@ typedef struct{
     int gold;
     int wood;
 }player;
+
 
     //Map
 typedef struct{

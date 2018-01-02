@@ -1,4 +1,5 @@
-#include "engine.h"
+#include "../coord.h"
+#include "../game/structures.h"
 
     //Macros
 #define SCREEN_WIDTH 1920
@@ -15,7 +16,7 @@
 typedef struct{
     coord offset;
     float zoom;
-	int leftClick;
+    int leftClick;
 }view;
 
 
