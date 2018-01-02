@@ -5,7 +5,7 @@
 #include <SDL2/SDL_image.h>
 
 #include "include/display/map_display.h"
-#include "include/game/structures.h"
+#include "include/game/game.h"
 
 
 //Temporary main, for testing purpose only
@@ -42,7 +42,7 @@ int main(int argc, char** argv){
 	dispMap(window, renderer, sprites, texture, camera); //Would'nt be dsiplayed at first because of newEvent
 
 	while(!quit){
-		SDL_Delay(17);	//~60fps
+		SDL_Delay(REFRESH_PERIOD);
 		newEvent = cameraEvents(&event, &camera);
 		if(newEvent){
 			dispMap(window, renderer, sprites, texture, camera);

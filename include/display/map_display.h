@@ -1,9 +1,8 @@
 #include "../coord.h"
-#include "../game/structures.h"
+#include "display.h"
 
     //Macros
-#define SCREEN_WIDTH 1920
-#define SCREEN_HEIGHT 1080
+
 #define TILE_SIZE 50
 
 #define MAX_ZOOM 5

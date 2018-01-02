@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#include "../include/game/game.h"
 #include "../include/display/map_display.h"
 
 
