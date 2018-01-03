@@ -4,18 +4,25 @@
 
         //Macros
     //Units types
-#define PEASANT 0;
-#define SOLDIER 1;
+#define PEASANT 0
+#define SOLDIER 1
 
     //Building types
-#define CITY 0;
-#define BARRACKS 1;
+#define CITY 0
+#define BARRACK 1
+
+    //Player color/ID
+#define RED 0
+#define BLUE 1
+#define  GREEN 2
+#define YELLOW 3
+
 
     //Resources types
-#define GOLD 0;
-#define WOOD 1;
+#define GOLD 0
+#define WOOD 1
 
-    //Map (TODO more sizes)
+    //Map (TODO more sizes?)
 #define MAP_SIZE 15
 
 
@@ -23,7 +30,6 @@
         //Structures
     //Player
 typedef struct{
-    int owner;  //== player.id
     int type;   //See macros
     coord pos;
 
@@ -35,7 +41,6 @@ typedef struct{
 
 
 typedef struct{
-    int owner;
     int type;
     coord pos;
 
@@ -54,7 +59,9 @@ typedef struct{
     int id;
 
     building * buildings;   //Array
+    int nBuildings;
     unit * units;   //Array
+    int nUnits;
 
     int gold;
     int wood;
@@ -70,5 +77,16 @@ typedef struct{
 
 typedef struct{
     int size;
+
     resource * resources;   //Array
+    int nResources;
 }map;
+
+
+    //Game (contains every info about the current game)
+typedef struct{
+    player * players;   //Array
+    int nPlayers;
+
+    map map;
+}game;
