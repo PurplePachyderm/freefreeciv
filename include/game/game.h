@@ -31,6 +31,7 @@
     //Player
 typedef struct{
     int type;   //See macros
+    int owner; //== player.id
     coord pos;
 
     int life;
@@ -42,16 +43,17 @@ typedef struct{
 
 typedef struct{
     int type;
+    int owner; //== player.id
     coord pos;
 
     int life;
-    int MaxLife;
+    int maxLife;
 
     int attack;
     int isBusy;
 
-    int speed;
-    int maxSpeed;
+    int movement;
+    int maxMovement;
 }unit;
 
 
