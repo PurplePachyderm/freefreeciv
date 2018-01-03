@@ -52,8 +52,8 @@ typedef struct{
     int attack;
     int isBusy;
 
-    int movement;
-    int maxMovement;
+    int movements;
+    int maxMovements;
 }unit;
 
 

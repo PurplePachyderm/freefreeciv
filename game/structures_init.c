@@ -8,8 +8,8 @@ void initPeasant(unit * peasant, int owner, int x, int y){
     peasant->type = PEASANT;
     peasant->owner = owner;
 
-    peasant->coord.x = x;
-    peasant->coord.y = y;
+    peasant->pos.x = x;
+    peasant->pos.y = y;
 
     peasant->life = 6;
     peasant->maxLife = 6;
@@ -17,8 +17,8 @@ void initPeasant(unit * peasant, int owner, int x, int y){
     peasant->attack = 2;
     peasant->isBusy = 1;
 
-    peasant->speed = 4;
-    peasant->maxMovement = 4;
+    peasant->movements = 4;
+    peasant->maxMovements = 4;
 }
 
 
@@ -27,8 +27,8 @@ void initSoldier(unit * soldier, int owner, int x, int y){
     soldier->type = SOLDIER;
     soldier->owner = owner;
 
-    soldier->coord.x = x;
-    soldier->coord.y = y;
+    soldier->pos.x = x;
+    soldier->pos.y = y;
 
     soldier->life = 12;
     soldier->maxLife = 12;
@@ -36,8 +36,8 @@ void initSoldier(unit * soldier, int owner, int x, int y){
     soldier->attack = 4;
     soldier->isBusy = 1;
 
-    soldier->speed = 3;
-    soldier->maxMovement = 3;
+    soldier->movements = 3;
+    soldier->maxMovements = 3;
 }
 
 
