@@ -7,6 +7,7 @@
 #include "include/display/map_display.h"
 #include "include/display/tokens_display.h"
 #include "include/game/game.h"
+#include "include/game/structures_init.h"
 
 
 //Temporary main, for testing purpose only
@@ -48,50 +49,26 @@ int main(int argc, char** argv){
 
 	game.players[0].buildings = (building*) malloc(2 * sizeof(building));
 	game.players[0].nBuildings = 2;
-		game.players[0].buildings[0].type = CITY;
-		game.players[0].buildings[0].pos.x = 3;
-		game.players[0].buildings[0].pos.y = 5;
-
-		game.players[0].buildings[1].type = BARRACK;
-		game.players[0].buildings[1].pos.x = 5;
-		game.players[0].buildings[1].pos.y = 2;
-
+		initCity(&game.players[0].buildings[0],0, 3, 5);
+		initBarrack(&game.players[0].buildings[1], 0, 5, 2);
 
 	game.players[0].units = (unit*) malloc(2 * sizeof(unit));
 	game.players[0].nUnits = 2;
-		game.players[0].units[0].type = PEASANT;
-		game.players[0].units[0].pos.x = 3;
-		game.players[0].units[0].pos.y = 4;
-
-		game.players[0].units[1].type = SOLDIER;
-		game.players[0].units[1].pos.x = 7;
-		game.players[0].units[1].pos.y = 2;
-
+		initPeasant(&game.players[0].units[0], 0, 3, 4);
+		initSoldier(&game.players[0].units[1], 0, 5, 12);
 
 
 	game.players[1].id = BLUE;
 
 	game.players[1].buildings = (building*) malloc(2 * sizeof(building));
 	game.players[1].nBuildings = 2;
-		game.players[1].buildings[0].type = CITY;
-		game.players[1].buildings[0].pos.x = 10;
-		game.players[1].buildings[0].pos.y = 8;
-
-		game.players[1].buildings[1].type = BARRACK;
-		game.players[1].buildings[1].pos.x = 11;
-		game.players[1].buildings[1].pos.y = 7;
-
+		initCity(&game.players[1].buildings[0],1, 10, 8);
+		initBarrack(&game.players[1].buildings[1], 1, 11, 7);
 
 	game.players[1].units = (unit*) malloc(2 * sizeof(unit));
 	game.players[1].nUnits = 2;
-		game.players[1].units[0].type = PEASANT;
-		game.players[1].units[0].pos.x = 9;
-		game.players[1].units[0].pos.y = 5;
-
-		game.players[1].units[1].type = SOLDIER;
-		game.players[1].units[1].pos.x = 6;
-		game.players[1].units[1].pos.y = 6;
-
+		initPeasant(&game.players[1].units[0], 1, 9, 5);
+		initSoldier(&game.players[1].units[1], 1, 6, 6);
 
 
 	game.map.resources = (resource*) malloc (2 * sizeof(resource));
