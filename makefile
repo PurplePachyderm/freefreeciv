@@ -1,6 +1,6 @@
 #Variables
 DISPLAY_FILES = display.o map_display.o tokens_display.o
-GAME_FILES = structures_init.o
+GAME_FILES = structures_init.o #save_system.o
 LIBS = -Llib -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -ljson-c
 
 
@@ -27,6 +27,9 @@ tokens_display.o:	display/tokens_display.c
 #Game
 structures_init.o:
 	gcc -c game/structures_init.c -Wall
+
+#save_system.o:
+#	gcc -c game/save_system.c -Wall
 
 #Phony
 clean:

@@ -8,6 +8,7 @@
 #include "include/display/tokens_display.h"
 #include "include/game/game.h"
 #include "include/game/structures_init.h"
+#include "include/game/save_system.h"
 
 
 //Temporary main, for testing purpose only
@@ -40,6 +41,7 @@ int main(int argc, char** argv){
 
 
 		//Game init
+/******************************************************************************/
 	game game;
 
 	game.players = (player*) malloc(2 * sizeof(player));
@@ -82,6 +84,8 @@ int main(int argc, char** argv){
 		game.map.resources[1].pos.x = 8;
 		game.map.resources[1].pos.y = 8;
 
+	//createSave("test", game);
+/******************************************************************************/
 
 
 		//Display
