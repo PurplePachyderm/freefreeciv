@@ -13,7 +13,7 @@
 
 //Temporary main, for testing purpose only
 int main(int argc, char** argv){
-/*
+
 		//Camera init
 	view camera;
 	camera.offset.x = (SCREEN_WIDTH - MAP_SIZE*TILE_SIZE) / 2;	//Centers map
@@ -38,7 +38,7 @@ int main(int argc, char** argv){
 
 	SDL_Texture * texture = NULL;
 	texture = SDL_CreateTextureFromSurface(renderer, sprites);
-*/
+
 
 		//Game init
 /******************************************************************************/
@@ -72,7 +72,7 @@ int main(int argc, char** argv){
 		initPeasant(&game.players[1].units[0], 1, 9, 5);
 		initSoldier(&game.players[1].units[1], 1, 6, 6);
 
-
+	game.map.size = MAP_SIZE;
 	game.map.resources = (resource*) malloc (2 * sizeof(resource));
 		game.map.nResources = 2;
 
@@ -85,10 +85,9 @@ int main(int argc, char** argv){
 		game.map.resources[1].pos.y = 8;
 
 	createSave("test", game);
-	printf("Yaay! It worked!\n");
 /******************************************************************************/
 
-/*
+
 		//Display
 	int quit = 0;
 	int newEvent;	//Render new frame only if a new event has occured to save resources
@@ -109,6 +108,6 @@ int main(int argc, char** argv){
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_FreeSurface(sprites);
-*/
+
 	return 0;
 }

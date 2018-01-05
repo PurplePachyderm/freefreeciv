@@ -194,9 +194,53 @@ void createSave(char * saveName, game game){
     }
     json_object_object_add(jGame, "players", jPlayersArray);
 
+    //game.map
+    json_object * jMap = json_object_new_object();
+
+    //map.size
+    json_object * jMapSize = json_object_new_int(game.map.size);
+    json_object_object_add(jMap, "size", jMapSize);
+
+    //map.nResources;
+    json_object * jNResources = json_object_new_int(game.map.nResources);
+    json_object_object_add(jMap, "nResources", jNResources);
+
+    //map.resources;
+    json_object ** jResources = (json_object**) malloc(game.map.nResources * sizeof(json_object*));
+    json_object * jResourcesArray = json_object_new_array();
+        json_object ** jResourcesType = (json_object**) malloc(game.map.nResources * sizeof(json_object*));
+        json_object ** jResourcesPos = (json_object**) malloc(game.map.nResources * sizeof(json_object*));
+            json_object ** jResourcesX = (json_object**) malloc(game.map.nResources * sizeof(json_object*));
+            json_object ** jResourcesY = (json_object**) malloc(game.map.nResources * sizeof(json_object*));
+
+    for(int i =0; i<game.map.nResources; i++){
+        jResources[i] = json_object_new_object();
+
+        //Resource.type
+        jResourcesType[i] = json_object_new_int(game.map.resources[i].type);
+        json_object_object_add(jResources[i], "type", jResourcesType[i]);
+
+        //Resource.pos
+        jResourcesPos[i] = json_object_new_object();
+
+        jResourcesX[i] = json_object_new_int(game.map.resources[i].pos.x);
+        json_object_object_add(jResourcesPos[i], "x", jResourcesX[i]);
+
+        jResourcesY[i] = json_object_new_int(game.map.resources[i].pos.y);
+        json_object_object_add(jResourcesPos[i], "y", jResourcesY[i]);
+
+        json_object_object_add(jResources[i], "pos", jResourcesPos[i]);
+
+        //Appending to array
+        json_object_array_add(jResourcesArray, jResources[i]);
+    }
+    json_object_object_add(jMap, "resources", jResourcesArray);
+
+    json_object_object_add(jGame, "map", jMap);
 
         //Copy of string to the JSON file
     char *  path = (char*) malloc(100 * sizeof(char));
+    path[0] = '\0';
     path = strcat(path, "saves/");
     path = strcat(path, saveName);
     path = strcat(path, ".json");
@@ -204,8 +248,75 @@ void createSave(char * saveName, game game){
     FILE * save = fopen(path, "w");
 
     fputs(json_object_to_json_string(jGame), save);
+
         //Freeing
     json_object_put(jGame);  //All children object are alsoo freed
     free(path);
     fclose(save);
+
+
+    free(jPlayers);
+    free(jPlayersId);
+    free(jPlayersNBuildings),
+    free(jPlayersNUnits);
+    free(jPlayersBuildingsArray);
+    free(jPlayersUnitsArray);
+    free(jPlayersGold);
+    free(jPlayersWood);
+
+    for(int i=0; i<game.nPlayers; i++){
+        free(jPlayersBuildings[i]);
+
+            free(jBuildingsType[i]);
+            free(jBuildingsOwner[i]);
+            free(jBuildingsPos[i]);
+                free(jBuildingsX[i]);
+                free(jBuildingsY[i]);
+            free(jBuildingsLife[i]);
+            free(jBuildingsMaxLife[i]);
+            free(jBuildingsIsBusy[i]);
+
+            free(jPlayersUnits[i]);
+                free(jUnitsType[i]);
+                free(jUnitsOwner[i]);
+                free(jUnitsPos[i]);
+                    free(jUnitsX[i]);
+                    free(jUnitsY[i]);
+                free(jUnitsLife[i]);
+                free(jUnitsMaxLife[i]);
+                free(jUnitsAttack[i]);
+                free(jUnitsIsBusy[i]);
+                free(jUnitsMovements[i]);
+                free(jUnitsMaxMovements[i]);
+    }
+
+    free(jPlayersBuildings);
+
+        free(jBuildingsType);
+        free(jBuildingsOwner);
+        free(jBuildingsPos);
+            free(jBuildingsX);
+            free(jBuildingsY);
+        free(jBuildingsLife);
+        free(jBuildingsMaxLife);
+        free(jBuildingsIsBusy);
+
+    free(jPlayersUnits);
+        free(jUnitsType);
+        free(jUnitsOwner);
+        free(jUnitsPos);
+            free(jUnitsX);
+            free(jUnitsY);
+        free(jUnitsLife);
+        free(jUnitsMaxLife);
+        free(jUnitsAttack);
+        free(jUnitsIsBusy);
+        free(jUnitsMovements);
+        free(jUnitsMaxMovements);
+
+        free(jResources);
+            free(jResourcesType);
+            free(jResourcesPos);
+                free(jResourcesX);
+                free(jResourcesY);
 }
