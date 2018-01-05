@@ -320,3 +320,179 @@ void createSave(char * saveName, game game){
                 free(jResourcesX);
                 free(jResourcesY);
 }
+
+
+
+void loadSave(char * saveName, game * game){
+        //Access to the JSON file
+    char *  path = (char*) malloc(100 * sizeof(char));
+    path[0] = '\0';
+    path = strcat(path, "saves/");
+    path = strcat(path, saveName);
+    path = strcat(path, ".json");
+
+    FILE * save = fopen(path, "r");
+
+    char jString [10000];
+    jString[0] = '\0';
+    fgets(jString, 10000, save);
+    fclose(save);
+    free(path);
+
+    json_object * jGame = json_tokener_parse(jString);
+
+        //Parsing
+    //game.nPlayers
+    json_object * jNPlayers = json_object_object_get(jGame, "nPlayers");
+    game->nPlayers = json_object_get_int(jNPlayers);
+
+    //game.players
+    game->players = (player*) malloc(game->nPlayers * sizeof(player));
+    json_object * jPlayersArray = json_object_object_get(jGame, "players");
+
+    for(int i=0; i<game->nPlayers; i++){
+        json_object * jPlayers = json_object_array_get_idx(jPlayersArray, i);
+
+        //players.id
+        json_object * jPlayersId = json_object_object_get(jPlayers, "id");
+        game->players[i].id = json_object_get_int(jPlayersId);
+
+        //players.nBuildings
+        json_object * jPlayersNBuildings = json_object_object_get(jPlayers, "nBuildings");
+        game->players[i].nBuildings = json_object_get_int(jPlayersNBuildings);
+
+        //players.buildings
+        game->players[i].buildings  = (building*) malloc(game->players[i].nBuildings * sizeof(building));
+        json_object  * jPlayersBuildingsArray = json_object_object_get(jPlayers, "buildings");
+
+        for(int j=0; j<game->players[i].nBuildings; j++ ){
+            json_object * jBuildings = json_object_array_get_idx(jPlayersBuildingsArray, j);
+
+            //buildings.type
+            json_object * jBuildingsType = json_object_object_get(jBuildings, "type");
+            game->players[i].buildings[j].type = json_object_get_int(jBuildingsType);
+
+            //buildings.owner
+            json_object * jBuildingsOwner = json_object_object_get(jBuildings, "owner");
+            game->players[i].buildings[j].owner = json_object_get_int(jBuildingsOwner);
+
+            //buildings.pos
+            json_object * jBuildingsPos = json_object_object_get(jBuildings, "pos");
+
+            json_object * jBuildingsX = json_object_object_get(jBuildingsPos, "x");
+            game->players[i].buildings[j].pos.x = json_object_get_int(jBuildingsX);
+
+            json_object * jBuildingsY = json_object_object_get(jBuildingsPos, "y");
+            game->players[i].buildings[j].pos.y = json_object_get_int(jBuildingsY);
+
+
+            //buildings.life
+            json_object * jBuildingsLife = json_object_object_get(jBuildings, "life");
+            game->players[i].buildings[j].life = json_object_get_int(jBuildingsLife);
+
+            //buildings.maxLife
+            json_object * jBuildingsMaxLife = json_object_object_get(jBuildings, "maxLife");
+            game->players[i].buildings[j].maxLife = json_object_get_int(jBuildingsMaxLife);
+
+            //buildings.isBusy
+            json_object * jBuildingsIsBusy = json_object_object_get(jBuildings, "isBusy");
+            game->players[i].buildings[j].isBusy = json_object_get_int(jBuildingsIsBusy);
+        }
+
+        //players.nUnits
+        json_object * jPlayersNUnits = json_object_object_get(jPlayers, "nUnits");
+        game->players[i].nUnits = json_object_get_int(jPlayersNUnits);
+
+        //players.units
+        game->players[i].units  = (unit*) malloc(game->players[i].nUnits * sizeof(unit));
+        json_object  * jPlayersUnitsArray = json_object_object_get(jPlayers, "units");
+
+        for(int j=0; j<game->players[i].nUnits; j++){
+            json_object * jUnits = json_object_array_get_idx(jPlayersUnitsArray, j);
+
+            //units.type
+            json_object * jUnitsType = json_object_object_get(jUnits, "type");
+            game->players[i].units[j].type = json_object_get_int(jUnitsType);
+
+            //units.owner
+            json_object * jUnitsOwner = json_object_object_get(jUnits, "owner");
+            game->players[i].units[j].owner = json_object_get_int(jUnitsOwner);
+
+            //units.pos
+            json_object * jUnitsPos = json_object_object_get(jUnits, "pos");
+
+            json_object * jUnitsX = json_object_object_get(jUnitsPos, "x");
+            game->players[i].units[j].pos.x = json_object_get_int(jUnitsX);
+
+            json_object * jUnitsY = json_object_object_get(jUnitsPos, "y");
+            game->players[i].units[j].pos.y = json_object_get_int(jUnitsY);
+
+            //units.life
+            json_object * jUnitsLife = json_object_object_get(jUnits, "life");
+            game->players[i].units[j].life = json_object_get_int(jUnitsLife);
+
+            //units.maxLife
+            json_object * jUnitsMaxLife = json_object_object_get(jUnits, "maxLife");
+            game->players[i].units[j].maxLife = json_object_get_int(jUnitsMaxLife);
+
+            //units.attack
+            json_object * jUnitsAttack = json_object_object_get(jUnits, "attack");
+            game->players[i].units[j].attack = json_object_get_int(jUnitsAttack);
+
+            //units.IsBusy
+            json_object * jUnitsIsBusy = json_object_object_get(jUnits, "IsBusy");
+            game->players[i].units[j].isBusy = json_object_get_int(jUnitsIsBusy);
+
+            //units.movements
+            json_object * jUnitsMovements = json_object_object_get(jUnits, "movements");
+            game->players[i].units[j].movements = json_object_get_int(jUnitsMovements);
+
+            //units.maxMovements
+            json_object * jUnitsMaxMovements = json_object_object_get(jUnits, "maxMovements");
+            game->players[i].units[j].maxMovements = json_object_get_int(jUnitsMaxMovements);
+        }
+
+        //players.gold
+        json_object * jPlayersGold = json_object_object_get(jPlayers, "gold");
+        game->players[i].gold = json_object_get_int(jPlayersGold);
+
+        //players.wood
+        json_object * jPlayersWood = json_object_object_get(jPlayers, "wood");
+        game->players[i].wood = json_object_get_int(jPlayersWood);
+    }
+
+    //game.map
+    json_object * jMap = json_object_object_get(jGame, "map");
+
+    //map.size
+    json_object * jMapSize = json_object_object_get(jMap, "size");
+    game->map.size = json_object_get_int(jMapSize);
+
+    //map.nResources
+    json_object * jNResources = json_object_object_get(jMap, "nResources");
+    game->map.nResources = json_object_get_int(jNResources);
+
+    //map.resources
+    json_object * jResourcesArray = json_object_object_get(jMap, "resources");
+    game->map.resources = (resource*) malloc(game->map.nResources * sizeof(resource));
+
+    for(int i=0; i<game->map.nResources; i++){
+        json_object * jResources = json_object_array_get_idx(jResourcesArray, i);
+
+        //resource.type
+        json_object * jResourcesType = json_object_object_get(jResources, "type");
+        game->map.resources[i].type = json_object_get_int(jResourcesType);
+
+        //resource.pos
+        json_object * jResourcesPos = json_object_object_get(jResources, "pos");
+
+        json_object * jResourcesX = json_object_object_get(jResourcesPos, "x");
+        game->map.resources[i].pos.x = json_object_get_int(jResourcesX);
+
+        json_object * jResourcesY = json_object_object_get(jResourcesPos, "y");
+        game->map.resources[i].pos.y = json_object_get_int(jResourcesY);
+
+    }
+
+    json_object_put(jGame);
+}

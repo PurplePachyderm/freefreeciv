@@ -40,52 +40,11 @@ int main(int argc, char** argv){
 	texture = SDL_CreateTextureFromSurface(renderer, sprites);
 
 
+
 		//Game init
-/******************************************************************************/
 	game game;
+	loadSave("test", &game);
 
-	game.players = (player*) malloc(2 * sizeof(player));
-	game.nPlayers = 2;
-
-	game.players[0].id = RED;
-
-	game.players[0].buildings = (building*) malloc(2 * sizeof(building));
-	game.players[0].nBuildings = 2;
-		initCity(&game.players[0].buildings[0],0, 3, 5);
-		initBarrack(&game.players[0].buildings[1], 0, 5, 2);
-
-	game.players[0].units = (unit*) malloc(2 * sizeof(unit));
-	game.players[0].nUnits = 2;
-		initPeasant(&game.players[0].units[0], 0, 3, 4);
-		initSoldier(&game.players[0].units[1], 0, 5, 12);
-
-
-	game.players[1].id = BLUE;
-
-	game.players[1].buildings = (building*) malloc(2 * sizeof(building));
-	game.players[1].nBuildings = 2;
-		initCity(&game.players[1].buildings[0],1, 10, 8);
-		initBarrack(&game.players[1].buildings[1], 1, 11, 7);
-
-	game.players[1].units = (unit*) malloc(2 * sizeof(unit));
-	game.players[1].nUnits = 2;
-		initPeasant(&game.players[1].units[0], 1, 9, 5);
-		initSoldier(&game.players[1].units[1], 1, 6, 6);
-
-	game.map.size = MAP_SIZE;
-	game.map.resources = (resource*) malloc (2 * sizeof(resource));
-		game.map.nResources = 2;
-
-		game.map.resources[0].type = GOLD;
-		game.map.resources[0].pos.x = 15;
-		game.map.resources[0].pos.y = 13;
-
-		game.map.resources[1].type = WOOD;
-		game.map.resources[1].pos.x = 8;
-		game.map.resources[1].pos.y = 8;
-
-	createSave("test", game);
-/******************************************************************************/
 
 
 		//Display
