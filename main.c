@@ -16,8 +16,8 @@ int main(int argc, char** argv){
 
 		//Camera init
 	view camera;
-	camera.offset.x = (SCREEN_WIDTH - MAP_SIZE*TILE_SIZE) / 2;	//Centers map
-	camera.offset.y = (SCREEN_HEIGHT - MAP_SIZE*TILE_SIZE) / 2;
+	camera.offset.x = (SCREEN_WIDTH - (MAP_SIZE+2)*TILE_SIZE) / 2;	//Centers map
+	camera.offset.y = (SCREEN_HEIGHT - (MAP_SIZE+2)*TILE_SIZE) / 2;
 	camera.zoom = 1;
 	camera.leftClick = 0;
 

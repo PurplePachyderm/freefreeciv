@@ -67,6 +67,8 @@ int cameraEvents(SDL_Event * event, view * camera){	//Changes camera's zoom & of
 		if(event->type == SDL_MOUSEWHEEL){
 			newEvent = 1;
 
+			float oldZoom = camera->zoom;
+
 			camera->zoom += event->wheel.y * ZOOM_FACTOR;	//ZOOM_FACTOR Defines the speed of zoom
 			event->wheel.y = 0;	//Idem
 
@@ -75,6 +77,10 @@ int cameraEvents(SDL_Event * event, view * camera){	//Changes camera's zoom & of
 				camera->zoom = MIN_ZOOM;
 			if(camera->zoom > MAX_ZOOM)
 				camera->zoom = MAX_ZOOM;
+
+			//camera.offset is modified so the zoom is centered on the middle of the screen
+			camera->offset.x = (int) camera->offset.x - ((camera->offset.x+(SCREEN_WIDTH/2-camera->offset.x)*(camera->zoom/oldZoom)) - SCREEN_WIDTH/2);
+			camera->offset.y = (int) camera->offset.y - ((camera->offset.y+(SCREEN_HEIGHT/2-camera->offset.y)*(camera->zoom/oldZoom)) - SCREEN_HEIGHT/2);
 		}
 	}
 	return newEvent;
