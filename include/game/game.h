@@ -59,6 +59,7 @@ typedef struct{
 
 typedef struct{
     int id;
+    int isAIControlled;
 
     building * buildings;   //Array
     int nBuildings;
@@ -89,6 +90,7 @@ typedef struct{
 typedef struct{
     player * players;   //Array
     int nPlayers;
+    int currentPlayer;
 
     map map;
 }game;

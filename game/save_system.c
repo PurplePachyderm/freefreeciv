@@ -16,11 +16,16 @@ void createSave(char * saveName, game game){
     json_object * jNPlayers = json_object_new_int(game.nPlayers);
     json_object_object_add(jGame, "nPlayers", jNPlayers);
 
+    //game.currentPlayer
+    json_object * jCurrentPlayer = json_object_new_int(game.currentPlayer);
+    json_object_object_add(jGame, "currentPlayer", jCurrentPlayer);
+
     //game.players
     json_object **  jPlayers = (json_object**) malloc(game.nPlayers * sizeof(json_object*));
     json_object *  jPlayersArray = json_object_new_array();
 
     json_object **  jPlayersId = (json_object**) malloc(game.nPlayers * sizeof(json_object*));
+    json_object **  jPlayersAI = (json_object**) malloc(game.nPlayers * sizeof(json_object*));
 
     json_object **  jPlayersNBuildings = (json_object**) malloc(game.nPlayers * sizeof(json_object*));
     json_object *** jPlayersBuildings = (json_object***) malloc(game.nPlayers * sizeof(json_object**));
@@ -57,6 +62,10 @@ void createSave(char * saveName, game game){
         //player.id
         jPlayersId[i] = json_object_new_int(game.players[i].id);
         json_object_object_add(jPlayers[i], "id", jPlayersId[i]);
+
+        //player.isAIControlled
+        jPlayersAI[i] = json_object_new_int(game.players[i].isAIControlled);
+        json_object_object_add(jPlayers[i], "isAIControlled", jPlayersAI[i]);
 
         //player.nBuildings
         jPlayersNBuildings[i] = json_object_new_int(game.players[i].nBuildings);
@@ -333,9 +342,9 @@ void loadSave(char * saveName, game * game){
 
     FILE * save = fopen(path, "r");
 
-    char jString [10000];
+    char jString [20000];
     jString[0] = '\0';
-    fgets(jString, 10000, save);
+    fgets(jString, 20000, save);
     fclose(save);
     free(path);
 
@@ -345,6 +354,10 @@ void loadSave(char * saveName, game * game){
     //game.nPlayers
     json_object * jNPlayers = json_object_object_get(jGame, "nPlayers");
     game->nPlayers = json_object_get_int(jNPlayers);
+
+    //game.currentPlayer
+    json_object * jCurrentPlayer = json_object_object_get(jGame, "currentPlayer");
+    game->currentPlayer = json_object_get_int(jCurrentPlayer);
 
     //game.players
     game->players = (player*) malloc(game->nPlayers * sizeof(player));
@@ -356,6 +369,10 @@ void loadSave(char * saveName, game * game){
         //players.id
         json_object * jPlayersId = json_object_object_get(jPlayers, "id");
         game->players[i].id = json_object_get_int(jPlayersId);
+
+        //players.isAIControlled
+        json_object * jPlayersAI = json_object_object_get(jPlayers, "isAIControlled");
+        game->players[i].isAIControlled = json_object_get_int(jPlayersAI);
 
         //players.nBuildings
         json_object * jPlayersNBuildings = json_object_object_get(jPlayers, "nBuildings");

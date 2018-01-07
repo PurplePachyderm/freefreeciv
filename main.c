@@ -45,8 +45,6 @@ int main(int argc, char** argv){
 	game game;
 	loadSave("test", &game);
 
-
-
 		//Display
 	int quit = 0;
 	int newEvent;	//Render new frame only if a new event has occured to save resources
