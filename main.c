@@ -34,7 +34,7 @@ int main(int argc, char** argv){
 	int flags = IMG_INIT_PNG;
 	IMG_Init(flags);
 	SDL_Surface * sprites;
-	sprites = IMG_Load("sprites.png");
+	sprites = IMG_Load("resources/sprites.png");
 
 	SDL_Texture * texture = NULL;
 	texture = SDL_CreateTextureFromSurface(renderer, sprites);
