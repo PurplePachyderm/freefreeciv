@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../include/game/units_actions.h"
+#include "../include/game/game.h"
 
-//TODO Test those functions
 
 int checkMap(game game, coord pos){
     //Iterates all game objects to check if a tile is free
@@ -78,7 +78,7 @@ void pathTesting(game game, coord startPos, coord targetPos, int size, coord * p
 
 
 int moveUnit(game * game, int ownerId, int unitId, coord targetPos, coord ** path){
-    //Returns 0 if no pass has been found, otherwise returns its mength
+    //Returns 0 if no pass has been found, otherwise returns its length
     coord startPos = game->players[ownerId].units[unitId].pos;
     int size = 0;
 
@@ -103,4 +103,30 @@ int moveUnit(game * game, int ownerId, int unitId, coord targetPos, coord ** pat
     }
 
     return size;
+}
+
+
+
+void collect(game * game, int ownerId, int unitId, coord targetPos){
+    int distX = abs(targetPos.x-game->players[ownerId].units[unitId].pos.x);
+    int distY = abs(targetPos.y-game->players[ownerId].units[unitId].pos.y);
+    int dist = distX+distY;
+
+    if(dist == 1){
+        for(int i=0; i<game->map.nResources; i++){  //Looks for the targeted resources
+            if(targetPos.x == game->map.resources[i].pos.x && targetPos.y == game->map.resources[i].pos.y){
+
+                switch(game->map.resources[i].type){    //Updates player resources
+                    case GOLD:
+                        game->players[ownerId].gold++;
+                        break;
+                    case WOOD:
+                        game->players[ownerId].wood++;
+                }
+
+                game->players[ownerId].units[unitId].isBusy = 1;
+                break;
+            }
+        }
+    }
 }

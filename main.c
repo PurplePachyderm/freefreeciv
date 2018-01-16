@@ -6,9 +6,11 @@
 
 #include "include/display/map_display.h"
 #include "include/display/tokens_display.h"
+#include "include/display/menu.h"
 #include "include/game/game.h"
 #include "include/game/structures_init.h"
 #include "include/game/save_system.h"
+#include "include/game/units_actions.h"
 
 
 //Temporary main, for testing purpose only
@@ -45,7 +47,20 @@ int main(int argc, char** argv){
 	game game;
 	loadSave("test", &game);
 
+	coord targetPos;
+	targetPos.x = 3;
+	targetPos.y = 6;
+	coord * path = NULL;
+	int pathFound = moveUnit(&game, 0, 0, targetPos, &path);
+	if(pathFound){
+		printf("Path of %d tiles has been found!\n", pathFound);
+		for(int i=0; i<pathFound; i++)
+			printf("[%d,%d] ", path[i].x, path[i].y);
+		printf("\n");
+	}
+
 		//Display
+	//menu();
 	int quit = 0;
 	int newEvent;	//Render new frame only if a new event has occured to save resources
 
