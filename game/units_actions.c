@@ -5,6 +5,8 @@
 #include "../include/game/game.h"
 
 
+//XXX NEEDS TESTING
+
 int checkMap(game game, coord pos){
     //Iterates all game objects to check if a tile is free
     int tileIsOccupied = 0;
@@ -139,11 +141,15 @@ void attack(game * game, int ownerId, int unitId, coord targetPos){
     int dist = distX+distY;
 
     if(dist == 1){
+
+        int targetFound = 0; //Will stop research after target has been found
+
         for(int i=0; i<game->nPlayers; i++){
             if(i != ownerId){
 
                 for(int j=0; j<game->players[i].nUnits; j++){   //Cycles units
                     if(targetPos.x == game->players[i].units[j].pos.x && targetPos.y == game->players[i].units[j].pos.y){
+                        targetFound = 1;
 
                         game->players[i].units[j].life -= game->players[i].units[j].attack;
 
@@ -155,22 +161,8 @@ void attack(game * game, int ownerId, int unitId, coord targetPos){
                             int id = 0; //We need a separate counter since it must not be incremented for the dead unit
                             for(int k=0; k<game->players[i].nUnits; k++){
 
-                                if(k != unitId){
-                                    newUnits[id].type = game->players[i].units[k].type;
-                                    newUnits[id].owner = game->players[i].units[k].owner;
-
-                                    newUnits[id].pos.x = game->players[i].units[k].pos.x;
-                                    newUnits[id].pos.y = game->players[i].units[k].pos.y;
-
-                                    newUnits[id].life = game->players[i].units[k].life;
-                                    newUnits[id].maxLife = game->players[i].units[k].maxLife;
-
-                                    newUnits[id].movements = game->players[i].units[k].movements;
-                                    newUnits[id].maxMovements = game->players[i].units[k].maxMovements;
-
-                                    newUnits[id].attack = game->players[i].units[k].attack;
-                                    newUnits[id].isBusy = game->players[i].units[k].isBusy;
-
+                                if(k != j){ //Not recreating dead unit
+                                    newUnits[id] = game->players[i].units[k];
                                     id++;
                                 }
 
@@ -182,17 +174,59 @@ void attack(game * game, int ownerId, int unitId, coord targetPos){
                     }
                 }
 
+                if(targetFound)
+                    break;
+
                 for(int j=0; j<game->players[i].nBuildings; j++){
                     if(targetPos.x == game->players[i].buildings[j].pos.x && targetPos.y == game->players[i].buildings[j].pos.y){
+                        targetFound = 1;
 
                         game->players[i].buildings[j].life -= game->players[i].units[j].attack;
 
-                        if(game->players[i].buildings[j].life <= 0){
-                            //WIP
+                        if(game->players[i].buildings[j].life <= 0 && game->players[i].buildings[j].type != CITY){ //Death of building (not city)
+                            game->players[i].nBuildings--;
+                            building * newBuildings;    //Reallocating buildings
+                            newBuildings = (building*) malloc(game->players[i].nBuildings * sizeof(building));
+
+                            int id = 0; //Idem units
+                            for(int k=0; k<game->players[i].nBuildings; k++){
+
+                                if(k != j){
+                                    newBuildings[id] = game->players[i].buildings[k];
+                                    id++;
+                                }
+
+                                free(game->players[i].buildings);
+                                game->players[i].buildings = newBuildings;
+                            }
+                            break;
                         }
                     }
-                }
-            }
-        }
-    }
-}
+
+                    else if(game->players[i].buildings[j].life <= 0 && game->players[i].buildings[j].type == CITY){   //Death of city (player looses)
+                        game->nPlayers--;
+                        player * newPlayers;   //Reallocating players
+                        newPlayers = (player*) malloc(game->nPlayers * sizeof(player));
+
+                        int id = 0;
+                        for(int k=0; k<game->nPlayers; k++){
+                             if(k != j){
+                                 newPlayers[id] = game->players[k];
+                                 id++;
+                             }
+
+                             free(game->players);
+                             game->players = newPlayers;
+                        }
+                        break;
+                    }
+
+                    if(targetFound){
+                        break;
+                    }//1
+                }//1   1
+            }//1   2   1
+        }//1   3   3   1
+    }//1   4   6   4   1
+}//1   5   10  10  5   1
+// :p
