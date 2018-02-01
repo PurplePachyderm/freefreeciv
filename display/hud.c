@@ -16,7 +16,7 @@
 
 
 //Main HUD (default game state)
-void mainHud(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game){
+void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game){
 	SDL_Event event;
     int quit = 0;
     int newEvent = 0;
@@ -32,8 +32,8 @@ void mainHud(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites
     exitPos.y = 0;
 
 
-    dispMap(window, renderer, sprites, texture, camera); //Would'nt be displayed at first because of newEvent
-    dispTokens(window, renderer, sprites, texture, camera, game);
+    dispMap(renderer, sprites, texture, camera); //Would'nt be displayed at first because of newEvent
+    dispTokens(renderer, sprites, texture, camera, game);
     blitSprite(renderer, sprites, texture, 5, 30, exitPos.x, exitPos.y, TILE_SIZE);
 
     SDL_Rect srcRect;
@@ -58,8 +58,8 @@ void mainHud(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites
         }
 
         if(newEvent){   //Refresh display if a new event has occured
-            dispMap(window, renderer, sprites, texture, camera);
-            dispTokens(window, renderer, sprites, texture, camera, game);
+            dispMap(renderer, sprites, texture, camera);
+            dispTokens(renderer, sprites, texture, camera, game);
             blitSprite(renderer, sprites, texture, 5, 30, exitPos.x, exitPos.y, TILE_SIZE); //Menu cross
             SDL_RenderPresent(renderer);
         }
@@ -69,6 +69,7 @@ void mainHud(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites
 
 
 //Menu HUD (Quit game, load & save)
+//XXX Move to menu.c in other versions?
 int menuHud(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * texture, game game){
     SDL_Event event;
     int quit = 0;
@@ -162,6 +163,7 @@ int menuHud(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * textu
         SDL_Delay(REFRESH_PERIOD);
 
         while(SDL_PollEvent(&event)){
+            //TODO Add all events
             //Quit menu
             if(event.type == SDL_MOUSEBUTTONDOWN
         	&& event.button.button == SDL_BUTTON_LEFT

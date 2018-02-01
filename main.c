@@ -44,7 +44,7 @@ int main(int argc, char** argv){
 	loadSave("test", &game);
 
 		//Display
-	mainHud(window, renderer, sprites, texture, game);
+	mainHud(renderer, sprites, texture, game);
 
 	return 0;
 }

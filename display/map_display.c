@@ -5,7 +5,7 @@
 #include "../include/display/map_display.h"
 
 	//Blits water sprites all over the screen
-void dispBackground(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
+void dispBackground(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
 	int width = (int) TILE_SIZE*camera.zoom + 1;
 	coord currentPos;
 
@@ -32,7 +32,7 @@ void dispBackground(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * 
 
 
 	//Displays sea+continent
-void dispContinent(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
+void dispContinent(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
 	int x;
 	int y;
 	int width;
@@ -100,7 +100,7 @@ void dispContinent(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * s
 
 
 
-void dispMap(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
-	dispBackground(window, renderer, sprites, texture, camera);
-	dispContinent(window, renderer, sprites, texture, camera);
+void dispMap(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
+	dispBackground(renderer, sprites, texture, camera);
+	dispContinent(renderer, sprites, texture, camera);
 }
