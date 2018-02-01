@@ -4,6 +4,7 @@
 #include "../include/game/game.h"
 #include "../include/display/display.h"
 
+
 void setRectangle(SDL_Rect * rect, int x, int y, int w, int h){
 	rect->x = x;
 	rect->y = y;
@@ -26,27 +27,36 @@ void blitSprite(SDL_Renderer * renderer,  SDL_Surface * sprites, SDL_Texture * t
 
 
 
-int cameraEvents(SDL_Event * event, view * camera){	//Changes camera's zoom & offset
+int events(SDL_Event event, view * camera){	//Listen to all types of events in game
 	int newEvent = 0;	//If newEvent stays false, display won't be refreshed to save resources
+	//Otherwise, take the value of the associated event (to trigger menu etc if necessary)
 
-	while(SDL_PollEvent(event)){
+	//Menu selection
+	if(event.type == SDL_MOUSEBUTTONDOWN
+	&& event.button.button == SDL_BUTTON_LEFT
+	&& event.button.x >= SCREEN_WIDTH - TILE_SIZE && event.button.y <= TILE_SIZE){
+		newEvent = MENU;   //Triggers Menu
+	}
+	else if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
+		newEvent = MENU;
+	}
+	else{	//Camera (not paramount nor needing any UI change etc...)
 			//Camera motion
-		if(event->type == SDL_MOUSEBUTTONDOWN
-		&& event->button.button == SDL_BUTTON_LEFT){
+		if(event.type == SDL_MOUSEBUTTONDOWN
+		&& event.button.button == SDL_BUTTON_LEFT){
 			camera->leftClick = 1;
 		}
 
-		if(event->type == SDL_MOUSEBUTTONUP
-		&& event->button.button == SDL_BUTTON_LEFT){
+		if(event.type == SDL_MOUSEBUTTONUP
+		&& event.button.button == SDL_BUTTON_LEFT){
 			camera->leftClick = 0;
 		}
 
-		if(event->type == SDL_MOUSEMOTION && camera->leftClick){
-			newEvent = 1;
+		if(event.type == SDL_MOUSEMOTION && camera->leftClick){
+			newEvent = CAMERA;
 
-
-			camera->offset.x += event->motion.xrel;
-			camera->offset.y += event->motion.yrel;
+			camera->offset.x += event.motion.xrel;
+			camera->offset.y += event.motion.yrel;
 
 			//Map can't go out of the window
 			if(camera->offset.x < -TILE_SIZE*camera->zoom*(MAP_SIZE+2))
@@ -59,18 +69,18 @@ int cameraEvents(SDL_Event * event, view * camera){	//Changes camera's zoom & of
 				camera->offset.y = SCREEN_HEIGHT;
 
 			//Prevents map to keep moving since x/yrel are preserved at end of event
-			event->motion.xrel = 0;
-			event->motion.yrel = 0;
+			event.motion.xrel = 0;
+			event.motion.yrel = 0;
 		}
 
 			//Camera zoom
-		if(event->type == SDL_MOUSEWHEEL){
-			newEvent = 1;
+		if(event.type == SDL_MOUSEWHEEL){
+			newEvent = CAMERA;
 
 			float oldZoom = camera->zoom;
 
-			camera->zoom += event->wheel.y * ZOOM_FACTOR;	//ZOOM_FACTOR Defines the speed of zoom
-			event->wheel.y = 0;	//Idem
+			camera->zoom += event.wheel.y * ZOOM_FACTOR;	//ZOOM_FACTOR Defines the speed of zoom
+			event.wheel.y = 0;	//Idem
 
 			//Zoom must be between 0.2 and 5
 			if(camera->zoom < MIN_ZOOM)
@@ -83,5 +93,7 @@ int cameraEvents(SDL_Event * event, view * camera){	//Changes camera's zoom & of
 			camera->offset.y = (int) camera->offset.y - ((camera->offset.y+(SCREEN_HEIGHT/2-camera->offset.y)*(camera->zoom/oldZoom)) - SCREEN_HEIGHT/2);
 		}
 	}
+
 	return newEvent;
+
 }

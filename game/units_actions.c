@@ -125,7 +125,7 @@ void collect(game * game, int ownerId, int unitId, coord targetPos){
                     case WOOD:
                         game->players[ownerId].wood++;
                 }
-{}
+
                 game->players[ownerId].units[unitId].isBusy = 1;
                 break;
             }
