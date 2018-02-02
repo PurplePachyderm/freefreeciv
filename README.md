@@ -1,6 +1,8 @@
 # Freefreeciv
 [WIP] SDL turn-based strategy game made for a school project.
 
+(Active fork on Arveto)
+
 Required libraries (for now): [SDL2](https://www.libsdl.org/),
  [SDL_image](https://www.libsdl.org/projects/SDL_image/),
  [SDL_ttf](https://www.libsdl.org/projects/SDL_ttf/),
