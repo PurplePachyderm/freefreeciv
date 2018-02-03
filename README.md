@@ -10,6 +10,6 @@ Required libraries (for now): [SDL2](https://www.libsdl.org/),
 #### Sprites
 [Toen's Medieval Strategy](https://toen.itch.io/toens-medieval-strategy)
 #### Fonts
-[Pixeled](https://www.dafont.com/pixeled.font)
+[8 Bit Wonder](https://www.dafont.com/fr/8bit-wonder.font)
 
 [Star Jedi](https://www.dafont.com/fr/star-jedi.font)
