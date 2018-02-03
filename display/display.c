@@ -40,6 +40,8 @@ int events(SDL_Event event, view * camera){	//Listen to all types of events in g
 	else if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
 		newEvent = MENU;
 	}
+
+	
 	else{	//Camera (not paramount nor needing any UI change etc...)
 			//Camera motion
 		if(event.type == SDL_MOUSEBUTTONDOWN

@@ -76,11 +76,7 @@ void change_couleur(SDL_Renderer* RENDERER)
 
 
 //Menu HUD (Quit game, load & save)
-//XXX Move to menu.c in other versions?
 int inGameMenu(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * texture, game game){
-	//BUG Segmentation fault in the function (happens when exitting function)
-	//We're gonna Valgrind that shit
-
     SDL_Event event;
     int quit = 0;
     int exitGame = 0; //Return value
@@ -90,6 +86,7 @@ int inGameMenu(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * te
 
 
     //Background
+	//BUG Seems to be freed incorrectly sometimes (abnormal memory consumption but no crash)
     SDL_Rect srcRect;
     setRectangle(&srcRect, 0, 0, 3840, 2160); //Dim of background
 
@@ -101,7 +98,6 @@ int inGameMenu(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * te
     SDL_RenderCopy(renderer, backgroundTexture, &srcRect, &destRect);
 
     SDL_DestroyTexture(backgroundTexture);
-    SDL_FreeSurface(background);
 
     //Title
     TTF_Font * font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/8);
@@ -110,8 +106,8 @@ int inGameMenu(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * te
     SDL_Surface * title= TTF_RenderText_Blended(font, "freefreeciv", color);
     SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, title);
 
-    setRectangle(&srcRect, 0, title->h - (title->h*fontFactor+1), title->w, title->h * fontFactor + 1);
-    setRectangle(&destRect, SCREEN_WIDTH/2 - title->w/2, 3*SCREEN_HEIGHT/64, title->w, title->h * fontFactor + 1);
+    setRectangle(&srcRect, 0, title->h - (title->h*fontFactor+1), title->w, title->h * fontFactor);
+    setRectangle(&destRect, SCREEN_WIDTH/2 - title->w/2, 3*SCREEN_HEIGHT/64, title->w, title->h * fontFactor);
     SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
     SDL_DestroyTexture(textTexture);

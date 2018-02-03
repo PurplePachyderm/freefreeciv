@@ -25,6 +25,8 @@
     //Map (TODO more sizes?)
 #define MAP_SIZE 15
 
+#define TURN_TIME 90 //sec
+
 
 
         //Structures

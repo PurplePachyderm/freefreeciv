@@ -15,9 +15,6 @@
 //Temporary main, for testing purpose only
 int main(int argc, char** argv){
 
-		//Camera init
-
-
 		//SDL Initialization
 	SDL_Window  * window;
 	SDL_Renderer * renderer;
@@ -38,14 +35,20 @@ int main(int argc, char** argv){
 
 	TTF_Init();
 
-
 		//Game init
 	game game;
 	loadSave("test", &game);
-
+	
 		//Main menu (game hud for now)
 	mainHud(renderer, sprites, texture, game);
 
+
+	SDL_DestroyWindow(window);
+	SDL_DestroyRenderer(renderer);
+	SDL_FreeSurface(sprites);
+	SDL_DestroyTexture(texture);
+	TTF_Quit();
+	IMG_Quit();
 
 	return 0;
 }
