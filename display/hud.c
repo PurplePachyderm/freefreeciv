@@ -57,7 +57,6 @@ SDL_Rect mainHudDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Text
 	SDL_DestroyTexture(textTexture);
 
 
-	//TODO Countdown display
 	SDL_Color white = {255, 255, 255};
 
 	char countdownText [4];
@@ -99,8 +98,12 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 	SDL_Event event;
     int quit = 0;
     int newEvent = 0;
+
+	coord selectedTile;
+	int tokenId;
+
 	int countdown = TURN_TIME * 1000;	//30 sec in ms
-	int countdownSec = 89; //Approx in sec for display
+	int countdownSec = TURN_TIME; //Approx in sec for display
 
     view camera;
     camera.offset.x = (SCREEN_WIDTH - (MAP_SIZE+2)*TILE_SIZE) / 2;	//Centers map
@@ -109,17 +112,62 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
     camera.leftClick = 0;
 
 	//First display before any event
-	mainHudDisplay(renderer, sprites, texture, game, camera, countdownSec);
+	SDL_Rect endButton = mainHudDisplay(renderer, sprites, texture, game, camera, countdownSec);
 
     while(!quit){
         SDL_Delay(REFRESH_PERIOD);
 
         while(SDL_PollEvent(&event)){
-            newEvent = events(event, &camera);
+            newEvent = events(event, &camera, game, &selectedTile);
+
+			//End turn (potentially overrides TILE_SELECTION)
+			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= endButton.x && event.button.x <= endButton.x + endButton.w
+			&& event.button.y >= endButton.y && event.button.y <= endButton.y + endButton.h){
+				newEvent = END_TURN;
+				countdown = TURN_TIME * 1000;	//Change current player
+				countdownSec = TURN_TIME;
+				game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
+			}
+
             switch(newEvent){
                 case MENU:
                     quit = inGameMenu(renderer, sprites, texture, game);
                     break;
+
+				case TILE_SELECTION:
+					tokenId = checkOwnUnit(game, selectedTile);
+					if(tokenId < game.players[game.currentPlayer].nUnits){
+						switch(game.players[game.currentPlayer].units[tokenId].type){
+
+							case PEASANT:
+							//PeasantHud
+							printf("Clicked on peasant\n");
+							break;
+
+							case SOLDIER:
+							//SoldierHud
+							printf("Clicked on soldier\n");
+							break;
+						}
+					}
+					else{
+						tokenId = checkOwnBuilding(game, selectedTile);
+						if(tokenId < game.players[game.currentPlayer].nBuildings){
+							switch(game.players[game.currentPlayer].buildings[tokenId].type){
+
+								case CITY:
+								//CityHud
+								printf("Clicked on city\n");
+								break;
+
+								case BARRACK:
+								//barrackHud
+								printf("Clicked on barrack\n");
+								break;
+							}
+						}
+					}
             }
         }
 
@@ -130,7 +178,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 
 			if(countdownSec < 0){	//Change player at end of countdown
 				countdown = TURN_TIME * 1000;
-				countdownSec = 89;
+				countdownSec = TURN_TIME;
 				game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
 			}
 		}
@@ -141,3 +189,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 		}
     }
 }
+
+
+
+//PeasantHud

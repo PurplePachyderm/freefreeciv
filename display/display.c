@@ -27,7 +27,7 @@ void blitSprite(SDL_Renderer * renderer,  SDL_Surface * sprites, SDL_Texture * t
 
 
 
-int events(SDL_Event event, view * camera){	//Listen to all types of events in game
+int events(SDL_Event event, view * camera, game game, coord * selectedTile){	//Listen to all types of  general events in game
 	int newEvent = 0;	//If newEvent stays false, display won't be refreshed to save resources
 	//Otherwise, take the value of the associated event (to trigger menu etc if necessary)
 
@@ -41,59 +41,67 @@ int events(SDL_Event event, view * camera){	//Listen to all types of events in g
 		newEvent = MENU;
 	}
 
-	
-	else{	//Camera (not paramount nor needing any UI change etc...)
-			//Camera motion
-		if(event.type == SDL_MOUSEBUTTONDOWN
-		&& event.button.button == SDL_BUTTON_LEFT){
-			camera->leftClick = 1;
-		}
 
-		if(event.type == SDL_MOUSEBUTTONUP
-		&& event.button.button == SDL_BUTTON_LEFT){
-			camera->leftClick = 0;
-		}
+	//Tile selection (less paramount than menu)
+	else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+	&& event.button.x >= camera->offset.x+TILE_SIZE*camera->zoom && event.button.x <= camera->offset.x + camera->zoom*TILE_SIZE*(MAP_SIZE-1)
+	&& event.button.y >= camera->offset.y+TILE_SIZE*camera->zoom && event.button.y <= camera->offset.y + camera->zoom*TILE_SIZE*(MAP_SIZE-1)){
+		newEvent = TILE_SELECTION;
 
-		if(event.type == SDL_MOUSEMOTION && camera->leftClick){
-			newEvent = CAMERA;
+		selectedTile->x = ((event.button.x - camera->offset.x) / (TILE_SIZE * camera->zoom));
+		selectedTile->y = ((event.button.y - camera->offset.y) / (TILE_SIZE * camera->zoom));
+	}
 
-			camera->offset.x += event.motion.xrel;
-			camera->offset.y += event.motion.yrel;
+		//Camera motion
+	if(event.type == SDL_MOUSEBUTTONDOWN
+	&& event.button.button == SDL_BUTTON_LEFT){
+		camera->leftClick = 1;
+	}
 
-			//Map can't go out of the window
-			if(camera->offset.x < -TILE_SIZE*camera->zoom*(MAP_SIZE+2))
-				camera->offset.x = -TILE_SIZE*camera->zoom*(MAP_SIZE+2);
-			if(camera->offset.x > SCREEN_WIDTH)
-				camera->offset.x = SCREEN_WIDTH;
-			if(camera->offset.y < -TILE_SIZE*camera->zoom*(MAP_SIZE+2))
-				camera->offset.y = -TILE_SIZE*camera->zoom*(MAP_SIZE+2);
-			if(camera->offset.y > SCREEN_HEIGHT)
-				camera->offset.y = SCREEN_HEIGHT;
+	if(event.type == SDL_MOUSEBUTTONUP
+	&& event.button.button == SDL_BUTTON_LEFT){
+		camera->leftClick = 0;
+	}
 
-			//Prevents map to keep moving since x/yrel are preserved at end of event
-			event.motion.xrel = 0;
-			event.motion.yrel = 0;
-		}
+	if(event.type == SDL_MOUSEMOTION && camera->leftClick){
+		newEvent = CAMERA;
 
-			//Camera zoom
-		if(event.type == SDL_MOUSEWHEEL){
-			newEvent = CAMERA;
+		camera->offset.x += event.motion.xrel;
+		camera->offset.y += event.motion.yrel;
 
-			float oldZoom = camera->zoom;
+		//Map can't go out of the window
+		if(camera->offset.x < -TILE_SIZE*camera->zoom*(MAP_SIZE+2))
+			camera->offset.x = -TILE_SIZE*camera->zoom*(MAP_SIZE+2);
+		if(camera->offset.x > SCREEN_WIDTH)
+			camera->offset.x = SCREEN_WIDTH;
+		if(camera->offset.y < -TILE_SIZE*camera->zoom*(MAP_SIZE+2))
+			camera->offset.y = -TILE_SIZE*camera->zoom*(MAP_SIZE+2);
+		if(camera->offset.y > SCREEN_HEIGHT)
+			camera->offset.y = SCREEN_HEIGHT;
 
-			camera->zoom += event.wheel.y * ZOOM_FACTOR;	//ZOOM_FACTOR Defines the speed of zoom
-			event.wheel.y = 0;	//Idem
+		//Prevents map to keep moving since x/yrel are preserved at end of event
+		event.motion.xrel = 0;
+		event.motion.yrel = 0;
+	}
 
-			//Zoom must be between 0.2 and 5
-			if(camera->zoom < MIN_ZOOM)
-				camera->zoom = MIN_ZOOM;
-			if(camera->zoom > MAX_ZOOM)
-				camera->zoom = MAX_ZOOM;
+		//Camera zoom
+	if(event.type == SDL_MOUSEWHEEL){
+		newEvent = CAMERA;
 
-			//camera.offset is modified so the zoom is centered on the middle of the screen
-			camera->offset.x = (int) camera->offset.x - ((camera->offset.x+(SCREEN_WIDTH/2-camera->offset.x)*(camera->zoom/oldZoom)) - SCREEN_WIDTH/2);
-			camera->offset.y = (int) camera->offset.y - ((camera->offset.y+(SCREEN_HEIGHT/2-camera->offset.y)*(camera->zoom/oldZoom)) - SCREEN_HEIGHT/2);
-		}
+		float oldZoom = camera->zoom;
+
+		camera->zoom += event.wheel.y * ZOOM_FACTOR;	//ZOOM_FACTOR Defines the speed of zoom
+		event.wheel.y = 0;	//Idem
+
+		//Zoom must be between 0.2 and 5
+		if(camera->zoom < MIN_ZOOM)
+			camera->zoom = MIN_ZOOM;
+		if(camera->zoom > MAX_ZOOM)
+			camera->zoom = MAX_ZOOM;
+
+		//camera.offset is modified so the zoom is centered on the middle of the screen
+		camera->offset.x = (int) camera->offset.x - ((camera->offset.x+(SCREEN_WIDTH/2-camera->offset.x)*(camera->zoom/oldZoom)) - SCREEN_WIDTH/2);
+		camera->offset.y = (int) camera->offset.y - ((camera->offset.y+(SCREEN_HEIGHT/2-camera->offset.y)*(camera->zoom/oldZoom)) - SCREEN_HEIGHT/2);
 	}
 
 	return newEvent;

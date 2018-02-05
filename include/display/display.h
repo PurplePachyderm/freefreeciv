@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../coord.h"
+#include "../game/game.h"
 
 //Essential macros/functions for display, game and camera events management
 
@@ -20,6 +21,7 @@
 #define MENU 1
 #define TILE_SELECTION 2
 #define CAMERA 3
+#define END_TURN 4
 
 
     //Structures
@@ -34,4 +36,4 @@ typedef struct{
 void setRectangle(SDL_Rect * rect, int x, int y, int w, int h);
 void blitSprite(SDL_Renderer * renderer,  SDL_Surface * sprites, SDL_Texture * texture, int xSprite, int ySprite, int x, int y, int width);
 
-int events(SDL_Event event, view *camera);
+int events(SDL_Event event, view *camera, game game, coord * selectedTile);

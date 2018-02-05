@@ -96,3 +96,11 @@ typedef struct{
 
     map map;
 }game;
+
+
+    //Prototypes
+int checkOwnBuilding(game, coord pos);
+int checkOwnUnit(game, coord pos);
+
+int checkForeignBuilding(game, coord pos, int * ownerId);
+int checkForeignUnit(game, coord pos, int * ownerId);
