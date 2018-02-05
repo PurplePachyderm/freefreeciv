@@ -15,12 +15,14 @@
 #include "../include/game/units_actions.h"
 
 
+//Basic display (map, player, countdown, cross)
+SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, char * message){
+	//Warning: Does not include RenderPresent
 
-//Main HUD (default game state)
-SDL_Rect mainHudDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown){
 	float fontFactor = 0.9;	//Font opening size and surface size are different
 	SDL_Rect srcRect;
 	SDL_Rect destRect;
+
 
 	//Map & tokens
     dispMap(renderer, sprites, texture, camera); //Would'nt be displayed at first because of newEvent
@@ -56,7 +58,7 @@ SDL_Rect mainHudDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Text
 
 	SDL_DestroyTexture(textTexture);
 
-
+	//Countdown
 	SDL_Color white = {255, 255, 255};
 
 	char countdownText [4];
@@ -74,7 +76,7 @@ SDL_Rect mainHudDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Text
 
 
 	//Finish turn
-	SDL_Surface * end = TTF_RenderText_Blended(font, "END TURN", white);
+	SDL_Surface * end = TTF_RenderText_Blended(font, message, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, end);
 
 	setRectangle(&srcRect, 0, player->h-(player->h * fontFactor+1), end->w, end->h * fontFactor);
@@ -88,10 +90,23 @@ SDL_Rect mainHudDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Text
 	SDL_DestroyTexture(textTexture);
 
 	TTF_CloseFont(font);
-    SDL_RenderPresent(renderer);
 
 	return destRect;	//Coords of 'End turn' button (needed for event)
 }
+
+
+
+//Main HUD (default game state)
+SDL_Rect mainDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown){
+	SDL_Rect turnRect = basicDisplay(renderer, sprites, texture, game, camera, countdown, "END TURN");
+
+	//TODO Resources indicator
+
+	SDL_RenderPresent(renderer);
+
+	return turnRect;
+}
+
 
 
 void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game){
@@ -105,6 +120,8 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 	int countdown = TURN_TIME * 1000;	//30 sec in ms
 	int countdownSec = TURN_TIME; //Approx in sec for display
 
+	//int quitGame;
+
     view camera;
     camera.offset.x = (SCREEN_WIDTH - (MAP_SIZE+2)*TILE_SIZE) / 2;	//Centers map
     camera.offset.y = (SCREEN_HEIGHT - (MAP_SIZE+2)*TILE_SIZE) / 2;
@@ -112,7 +129,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
     camera.leftClick = 0;
 
 	//First display before any event
-	SDL_Rect endButton = mainHudDisplay(renderer, sprites, texture, game, camera, countdownSec);
+	SDL_Rect endButton = mainDisplay(renderer, sprites, texture, game, camera, countdownSec);
 
     while(!quit){
         SDL_Delay(REFRESH_PERIOD);
@@ -132,7 +149,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 
             switch(newEvent){
                 case MENU:
-                    quit = inGameMenu(renderer, sprites, texture, game);
+                    quit = inGameMenu(renderer, sprites, texture);
                     break;
 
 				case TILE_SELECTION:
@@ -141,8 +158,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 						switch(game.players[game.currentPlayer].units[tokenId].type){
 
 							case PEASANT:
-							//PeasantHud
-							printf("Clicked on peasant\n");
+							quit = peasantHud(renderer, sprites, texture, &game, &camera, &countdown, &countdownSec, tokenId);
 							break;
 
 							case SOLDIER:
@@ -184,7 +200,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 		}
 
         if(newEvent){  //Refresh display if a new event has occured
-			mainHudDisplay(renderer, sprites, texture, game, camera, countdownSec);
+			mainDisplay(renderer, sprites, texture, game, camera, countdownSec);
 			newEvent = 0;
 		}
     }
@@ -192,4 +208,75 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 
 
 
-//PeasantHud
+//Peasant Hud
+SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, int peasantId){
+	SDL_Rect cancelRect = basicDisplay(renderer, sprites, texture, game, camera, countdown, "CANCEL");
+
+	//Highlighter
+	coord highlighterCoords;
+	highlighterCoords.x = camera.offset.x+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].units[peasantId].pos.x);
+	highlighterCoords.y = camera.offset.y+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].units[peasantId].pos.y);
+	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
+
+	SDL_RenderPresent(renderer);
+	return cancelRect;
+}
+
+
+
+int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
+	SDL_Event event;
+	int quit = 0;
+	int quitGame = 0;	//Return value (quits the entire game)
+	int newEvent = 0;
+
+	coord selectedTile;
+	//int tokenId;
+	//int ownerId;
+
+	SDL_Rect cancelRect = peasantDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, peasantId);
+
+	while(!quit){
+		SDL_Delay(REFRESH_PERIOD);
+
+		//Events
+		while(SDL_PollEvent(&event)){
+			newEvent = events(event, camera, *game, &selectedTile);
+
+			//Menu
+			if(newEvent == MENU){
+				quitGame = inGameMenu(renderer, sprites, texture);
+				if(quitGame)
+					quit = 1;
+			}
+
+			//Cancel button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
+			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
+				quit = 1;
+			}
+		}
+
+		//Countdown
+		*countdown -= REFRESH_PERIOD;
+		if(*countdown/1000 < *countdownSec){	//Refresh display
+			(*countdownSec)--;	// (╯°□°）╯︵ ┻━┻ Don't forget the parenthesis
+			newEvent = 1;
+
+			if(*countdownSec < 0){	//Change player at end of countdown
+				*countdown = TURN_TIME * 1000;
+				*countdownSec = TURN_TIME;
+				game->currentPlayer = (game->currentPlayer+1) % game->nPlayers;
+				quit = 1;	//Back to mainHub for the next player
+			}
+		}
+
+		//Refresh
+		if(newEvent){
+			peasantDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, peasantId);
+		}
+	}
+
+	return quitGame;
+}

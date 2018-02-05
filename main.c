@@ -38,7 +38,7 @@ int main(int argc, char** argv){
 		//Game init
 	game game;
 	loadSave("test", &game);
-	
+
 		//Main menu (game hud for now)
 	mainHud(renderer, sprites, texture, game);
 

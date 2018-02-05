@@ -41,7 +41,6 @@ int events(SDL_Event event, view * camera, game game, coord * selectedTile){	//L
 		newEvent = MENU;
 	}
 
-
 	//Tile selection (less paramount than menu)
 	else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 	&& event.button.x >= camera->offset.x+TILE_SIZE*camera->zoom && event.button.x <= camera->offset.x + camera->zoom*TILE_SIZE*(MAP_SIZE-1)

@@ -76,7 +76,7 @@ void change_couleur(SDL_Renderer* RENDERER)
 
 
 //Menu HUD (Quit game, load & save)
-int inGameMenu(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * texture, game game){
+int inGameMenu(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * texture){
     SDL_Event event;
     int quit = 0;
     int exitGame = 0; //Return value
