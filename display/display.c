@@ -14,7 +14,7 @@ void setRectangle(SDL_Rect * rect, int x, int y, int w, int h){
 
 
 
-void blitSprite(SDL_Renderer * renderer,  SDL_Surface * sprites, SDL_Texture * texture, int xSprite, int ySprite, int x, int y, int width){
+void blitSprite(SDL_Renderer * renderer, SDL_Texture * texture, int xSprite, int ySprite, int x, int y, int width){
 	// x/ySprite: Coords on sprites reference sheet
 	// x/y: Coords on screen for rendering
 

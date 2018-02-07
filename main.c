@@ -40,7 +40,7 @@ int main(int argc, char** argv){
 	loadSave("test", &game);
 
 		//Main menu (game hud for now)
-	mainHud(renderer, sprites, texture, game);
+	mainHud(renderer, texture, game);
 
 
 	SDL_DestroyWindow(window);

@@ -76,7 +76,7 @@ void change_couleur(SDL_Renderer* RENDERER)
 
 
 //Menu HUD (Quit game, load & save)
-int inGameMenu(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * texture){
+int inGameMenu(SDL_Renderer * renderer,  SDL_Texture * texture){
     SDL_Event event;
     int quit = 0;
     int exitGame = 0; //Return value
@@ -152,7 +152,7 @@ int inGameMenu(SDL_Renderer * renderer, SDL_Surface * sprites,  SDL_Texture * te
     coord exitPos;  //Right top corner
     exitPos.x = SCREEN_WIDTH - TILE_SIZE;
     exitPos.y = 0;
-    blitSprite(renderer, sprites, texture, 5, 30, exitPos.x, exitPos.y, TILE_SIZE);
+    blitSprite(renderer, texture, 5, 30, exitPos.x, exitPos.y, TILE_SIZE);
 
     SDL_RenderPresent(renderer);
 	TTF_CloseFont(font);

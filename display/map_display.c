@@ -5,7 +5,7 @@
 #include "../include/display/map_display.h"
 
 	//Blits water sprites all over the screen
-void dispBackground(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
+void dispBackground(SDL_Renderer * renderer, SDL_Texture * texture, view camera){
 	int width = (int) TILE_SIZE*camera.zoom + 1;
 	coord currentPos;
 
@@ -21,7 +21,7 @@ void dispBackground(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture 
 				//if statement avoids blitting sprites under the continent
 			if( (currentPos.x < camera.offset.x+width || currentPos.x > camera.offset.x+(MAP_SIZE)*width) ||
 			((currentPos.y < camera.offset.y+width || currentPos.y > camera.offset.y+(MAP_SIZE)*width)) ){
-				blitSprite(renderer, sprites, texture, 2, 25, currentPos.x, currentPos.y, width);
+				blitSprite(renderer, texture, 2, 25, currentPos.x, currentPos.y, width);
 			}
 
 			currentPos.x += width;
@@ -32,7 +32,7 @@ void dispBackground(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture 
 
 
 	//Displays sea+continent
-void dispContinent(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
+void dispContinent(SDL_Renderer * renderer, SDL_Texture * texture, view camera){
 	int x;
 	int y;
 	int width;
@@ -92,7 +92,7 @@ void dispContinent(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture *
 			width = (int) TILE_SIZE*camera.zoom + 1;	//The +1 avoids 1 pixel gap between tiles on particular zoom values
 
 			if( (x+width>0 && y+width>0) || (x<SCREEN_WIDTH && y<SCREEN_HEIGHT) ){	//if statement avoids blitting sprites out of the screen
-				blitSprite(renderer, sprites, texture, sprite.x, sprite.y, x, y, width);
+				blitSprite(renderer, texture, sprite.x, sprite.y, x, y, width);
 			}
         }
     }
@@ -100,7 +100,7 @@ void dispContinent(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture *
 
 
 
-void dispMap(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera){
-	dispBackground(renderer, sprites, texture, camera);
-	dispContinent(renderer, sprites, texture, camera);
+void dispMap(SDL_Renderer * renderer, SDL_Texture * texture, view camera){
+	dispBackground(renderer, texture, camera);
+	dispContinent(renderer, texture, camera);
 }

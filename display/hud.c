@@ -16,7 +16,7 @@
 
 
 //Basic functions (reused in several Huds)
-SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, char * message){
+SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, char * message){
 	//Warning: Does not include RenderPresent
 	//Renders map, player indocator, countdown,
 
@@ -26,8 +26,8 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Textur
 
 
 	//Map & tokens
-    dispMap(renderer, sprites, texture, camera); //Would'nt be displayed at first because of newEvent
-    dispTokens(renderer, sprites, texture, camera, game);
+    dispMap(renderer, texture, camera); //Would'nt be displayed at first because of newEvent
+    dispTokens(renderer, texture, camera, game);
 
 
 	//Menu cross
@@ -35,7 +35,7 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Textur
 	exitPos.x = SCREEN_WIDTH - TILE_SIZE;
 	exitPos.y = 0;
 
-	blitSprite(renderer, sprites, texture, 5, 30, exitPos.x, exitPos.y, TILE_SIZE);
+	blitSprite(renderer, texture, 5, 30, exitPos.x, exitPos.y, TILE_SIZE);
 
 
 	//Player indicator
@@ -106,7 +106,7 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Textur
 	setRectangle(&destRect, 4, SCREEN_HEIGHT-(gold->h * fontFactor*1.5)-4, gold->w*1.5, gold->h * fontFactor*1.5);
 	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
-	blitSprite(renderer, sprites, texture, 4, 23, destRect.x+destRect.w-(TILE_SIZE*1.2-5), destRect.y, TILE_SIZE*1.2);
+	blitSprite(renderer, texture, 4, 23, destRect.x+destRect.w-(TILE_SIZE*1.2-5), destRect.y, TILE_SIZE*1.2);
 
 	SDL_DestroyTexture(textTexture);
 	SDL_FreeSurface(gold);
@@ -123,7 +123,7 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Textur
 	setRectangle(&destRect, 4, destRect.y-(gold->h * fontFactor*1.5)-4, wood->w*1.5, wood->h * fontFactor*1.5);
 	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
-	blitSprite(renderer, sprites, texture, 7, 23, destRect.x+destRect.w-(TILE_SIZE*1.2-5), destRect.y, TILE_SIZE*1.2);
+	blitSprite(renderer, texture, 7, 23, destRect.x+destRect.w-(TILE_SIZE*1.2-5), destRect.y, TILE_SIZE*1.2);
 
 	SDL_DestroyTexture(textTexture);
 	SDL_FreeSurface(wood);
@@ -155,8 +155,8 @@ int countdownUpdate(int * countdown, int * countdownSec, int quit, int * newEven
 
 
 //Main HUD (default game state)
-SDL_Rect mainDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown){
-	SDL_Rect turnRect = basicDisplay(renderer, sprites, texture, game, camera, countdown, "END TURN");
+SDL_Rect mainDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown){
+	SDL_Rect turnRect = basicDisplay(renderer, texture, game, camera, countdown, "END TURN");
 
 	SDL_RenderPresent(renderer);
 	return turnRect;
@@ -164,7 +164,7 @@ SDL_Rect mainDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture
 
 
 
-void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game){
+void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
 	SDL_Event event;
     int quit = 0;
     int newEvent = 0;
@@ -184,7 +184,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
     camera.leftClick = 0;
 
 	//First display before any event
-	SDL_Rect endButton = mainDisplay(renderer, sprites, texture, game, camera, countdownSec);
+	SDL_Rect endButton = mainDisplay(renderer, texture, game, camera, countdownSec);
 
     while(!quit){
         SDL_Delay(REFRESH_PERIOD);
@@ -204,7 +204,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 
             switch(newEvent){
                 case MENU:
-                    quit = inGameMenu(renderer, sprites, texture);
+                    quit = inGameMenu(renderer, texture);
 					camera.leftClick = 0;	//Avoids moving camera if menu entered w click and left with Escp
                     break;
 
@@ -214,18 +214,18 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 						switch(game.players[game.currentPlayer].units[tokenId].type){
 
 							case PEASANT:
-							quit = peasantHud(renderer, sprites, texture, &game, &camera, &countdown, &countdownSec, tokenId);
+							quit = peasantHud(renderer, texture, &game, &camera, &countdown, &countdownSec, tokenId);
 							break;
 
 							case SOLDIER:
-							quit = soldierHud(renderer, sprites, texture, &game, &camera, &countdown, &countdownSec, tokenId);
+							quit = soldierHud(renderer, texture, &game, &camera, &countdown, &countdownSec, tokenId);
 							break;
 						}
 					}
 					else{
 						tokenId = checkOwnBuilding(game, selectedTile);
 						if(tokenId < game.players[game.currentPlayer].nBuildings){
-								buildingHud(renderer, sprites, texture, &game, &camera, &countdown, &countdownSec, tokenId);
+								buildingHud(renderer, texture, &game, &camera, &countdown, &countdownSec, tokenId);
 
 						}
 					}
@@ -235,7 +235,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 		countdownUpdate(&countdown, &countdownSec, quit, &newEvent, &game);
 
         if(newEvent){  //Refresh display if a new event has occured
-			mainDisplay(renderer, sprites, texture, game, camera, countdownSec);
+			mainDisplay(renderer, texture, game, camera, countdownSec);
 			newEvent = 0;
 		}
     }
@@ -244,34 +244,34 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
 
 
 //Peasant Hud
-SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, int peasantId){
-	SDL_Rect cancelRect = basicDisplay(renderer, sprites, texture, game, camera, countdown, "CANCEL");
+SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int peasantId){
+	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
 
 	//Highlighter
 	coord highlighterCoords;
 	highlighterCoords.x = camera.offset.x+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].units[peasantId].pos.x);
 	highlighterCoords.y = camera.offset.y+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].units[peasantId].pos.y);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
 
 
 	//Move button
-	blitSprite(renderer, sprites, texture, 4, 16, SCREEN_WIDTH/2-TILE_SIZE*2*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*2*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, 4, 16, SCREEN_WIDTH/2-TILE_SIZE*2*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*2*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
 
 	//Attack button
-	blitSprite(renderer, sprites, texture, 5, 25, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, 5, 25, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
 
 	//Harvest button
-	blitSprite(renderer, sprites, texture, 7, 14, SCREEN_WIDTH/2+TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2+TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, 7, 14, SCREEN_WIDTH/2+TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2+TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
 
 	//Build button
-	blitSprite(renderer, sprites, texture, 3, 2, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, 3, 2, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
 
 	SDL_RenderPresent(renderer);
@@ -280,7 +280,7 @@ SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Text
 
 
 
-int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
+int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -291,7 +291,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 	//int tokenId;
 	//int ownerId;
 
-	SDL_Rect cancelRect = peasantDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, peasantId);
+	SDL_Rect cancelRect = peasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -302,7 +302,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, sprites, texture);
+				quitGame = inGameMenu(renderer, texture);
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -319,7 +319,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*2*1.75 && event.button.x<SCREEN_WIDTH/2
 			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
-				quitGame = targetHud(renderer, sprites, texture, game, camera, countdown, countdownSec, 1, selectedTile, &target);
+				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 1, selectedTile, &target);
 				if(quitGame)
 					quit = 1;
 				printf("Move to (%d, %d)\n", target.x, target.y);
@@ -331,7 +331,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 
 		//Refresh
 		if(newEvent){
-			peasantDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, peasantId);
+			peasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId);
 		}
 	}
 
@@ -341,24 +341,24 @@ int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 
 
 //Soldier Hud
-SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, int soldierId){
-	SDL_Rect cancelRect = basicDisplay(renderer, sprites, texture, game, camera, countdown, "CANCEL");
+SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int soldierId){
+	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
 
 	//Highlighter
 	coord highlighterCoords;
 	highlighterCoords.x = camera.offset.x+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].units[soldierId].pos.x);
 	highlighterCoords.y = camera.offset.y+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].units[soldierId].pos.y);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
 
 
 	//Move button
-	blitSprite(renderer, sprites, texture, 4, 16, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, 4, 16, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
 
 	//Attack button
-	blitSprite(renderer, sprites, texture, 5, 25, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, 5, 25, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
 
 
@@ -368,7 +368,7 @@ SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Text
 
 
 
-int soldierHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int soldierId){
+int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int soldierId){
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -378,7 +378,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 	//int tokenId;
 	//int ownerId;
 
-	SDL_Rect cancelRect = soldierDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, soldierId);
+	SDL_Rect cancelRect = soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -389,7 +389,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, sprites, texture);
+				quitGame = inGameMenu(renderer, texture);
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -408,7 +408,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 
 		//Refresh
 		if(newEvent){
-			soldierDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, soldierId);
+			soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
 		}
 	}
 
@@ -418,26 +418,26 @@ int soldierHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 
 
 //Building Hud
-SDL_Rect buildingDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, int buildingId){
-	SDL_Rect cancelRect = basicDisplay(renderer, sprites, texture, game, camera, countdown, "CANCEL");
+SDL_Rect buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int buildingId){
+	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
 
 	//Highlighter
 	coord highlighterCoords;
 	highlighterCoords.x = camera.offset.x+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].buildings[buildingId].pos.x);
 	highlighterCoords.y = camera.offset.y+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].buildings[buildingId].pos.y);
-	blitSprite(renderer, sprites, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
 
 
 	//Create Unit Button
 	switch(game.players[game.currentPlayer].buildings[buildingId].type){
 		case CITY:
-			blitSprite(renderer, sprites, texture, 7, 14, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+			blitSprite(renderer, texture, 7, 14, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 			break;
 
 		case BARRACK:
-			blitSprite(renderer, sprites, texture, 7, 17, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+			blitSprite(renderer, texture, 7, 17, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 	}
-	blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	blitSprite(renderer, texture, 4+game.currentPlayer, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
 	SDL_RenderPresent(renderer);
 
@@ -446,7 +446,7 @@ SDL_Rect buildingDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Tex
 
 
 
-int buildingHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int buildingId){
+int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int buildingId){
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -456,7 +456,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * te
 	//int tokenId;
 	//int ownerId;
 
-	SDL_Rect cancelRect = buildingDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, buildingId);
+	SDL_Rect cancelRect = buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -467,7 +467,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * te
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, sprites, texture);
+				quitGame = inGameMenu(renderer, texture);
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -486,7 +486,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * te
 
 		//Refresh
 		if(newEvent){
-			buildingDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, buildingId);
+			buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
 		}
 	}
 
@@ -496,8 +496,8 @@ int buildingHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * te
 
 
 //Target selection HUD
-SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, int isMovement, coord pos){
-	SDL_Rect cancelRect = basicDisplay(renderer, sprites, texture, game, camera, countdown, "CANCEL");
+SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int isMovement, coord pos){
+	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
 
 	SDL_Rect srcRect;
 	SDL_Rect destRect;
@@ -529,10 +529,10 @@ SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Textu
 
 	//Highlighters
 	if(!isMovement){
-		blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
-		blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-2)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
-		blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
-		blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-2)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-2)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-2)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
 	}
 
 
@@ -541,7 +541,7 @@ SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Textu
 }
 
 
-int targetHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int isMovement, coord pos, coord * target){
+int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int isMovement, coord pos, coord * target){
 	//General selection Hud used to retrieve clicked tile
 
 	SDL_Event event;
@@ -553,7 +553,7 @@ int targetHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * text
 	//int tokenId;
 	//int ownerId;
 
-	SDL_Rect cancelRect = targetDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, isMovement, pos);
+	SDL_Rect cancelRect = targetDisplay(renderer, texture, *game, *camera, *countdownSec, isMovement, pos);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -564,7 +564,7 @@ int targetHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * text
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, sprites, texture);
+				quitGame = inGameMenu(renderer, texture);
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -588,7 +588,7 @@ int targetHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * text
 
 		//Refresh
 		if(newEvent){
-			targetDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, isMovement, pos);
+			targetDisplay(renderer, texture, *game, *camera, *countdownSec, isMovement, pos);
 		}
 	}
 
