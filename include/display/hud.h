@@ -16,3 +16,6 @@ int soldierHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 
 SDL_Rect buildingDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, int soldierId);
 int buildingHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int soldierId);
+
+SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, int isMovement, coord pos);
+int targetHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int isMovement, coord pos, coord * target);

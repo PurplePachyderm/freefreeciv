@@ -205,6 +205,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * textu
             switch(newEvent){
                 case MENU:
                     quit = inGameMenu(renderer, sprites, texture);
+					camera.leftClick = 0;	//Avoids moving camera if menu entered w click and left with Escp
                     break;
 
 				case TILE_SELECTION:
@@ -285,6 +286,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 	int quitGame = 0;	//Return value (quits the entire game)
 	int newEvent = 0;
 
+	coord target;
 	coord selectedTile;
 	//int tokenId;
 	//int ownerId;
@@ -301,6 +303,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 			//Menu
 			if(newEvent == MENU){
 				quitGame = inGameMenu(renderer, sprites, texture);
+				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
 			}
@@ -310,6 +313,16 @@ int peasantHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
 			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
 				quit = 1;
+			}
+
+			//Move button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*2*1.75 && event.button.x<SCREEN_WIDTH/2
+			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
+				quitGame = targetHud(renderer, sprites, texture, game, camera, countdown, countdownSec, 1, selectedTile, &target);
+				if(quitGame)
+					quit = 1;
+				printf("Move to (%d, %d)\n", target.x, target.y);
 			}
 		}
 
@@ -377,6 +390,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * tex
 			//Menu
 			if(newEvent == MENU){
 				quitGame = inGameMenu(renderer, sprites, texture);
+				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
 			}
@@ -454,6 +468,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * te
 			//Menu
 			if(newEvent == MENU){
 				quitGame = inGameMenu(renderer, sprites, texture);
+				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
 			}
@@ -472,6 +487,108 @@ int buildingHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * te
 		//Refresh
 		if(newEvent){
 			buildingDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, buildingId);
+		}
+	}
+
+	return quitGame;
+}
+
+
+
+//Target selection HUD
+SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game game, view camera, int countdown, int isMovement, coord pos){
+	SDL_Rect cancelRect = basicDisplay(renderer, sprites, texture, game, camera, countdown, "CANCEL");
+
+	SDL_Rect srcRect;
+	SDL_Rect destRect;
+
+
+	//Upper message
+	SDL_Color white = {255, 255, 255};
+	TTF_Font * font = TTF_OpenFont("resources/8bit.ttf", SCREEN_HEIGHT/28);
+	float fontFactor = 0.9;
+
+	SDL_Surface * messageSurf;
+	if(isMovement) {
+		messageSurf = TTF_RenderText_Blended(font, "SELECT DESTINATION (RIGHT CLICK)", white);
+	}
+	else{
+		messageSurf = TTF_RenderText_Blended(font, "SELECT TARGET (RIGHT CLICK)", white);
+	}
+
+	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, messageSurf);
+
+	setRectangle(&srcRect, 0, messageSurf->h-(messageSurf->h * fontFactor+1), messageSurf->w, messageSurf->h * fontFactor+1);
+	setRectangle(&destRect, SCREEN_WIDTH/2-messageSurf->w/2, SCREEN_HEIGHT/20, messageSurf->w, messageSurf->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(messageSurf);
+	SDL_DestroyTexture(textTexture);
+	TTF_CloseFont(font);
+
+
+	//Highlighters
+	if(!isMovement){
+		blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-2)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, sprites, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-2)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+	}
+
+
+	SDL_RenderPresent(renderer);
+	return cancelRect;
+}
+
+
+int targetHud(SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int isMovement, coord pos, coord * target){
+	//General selection Hud used to retrieve clicked tile
+
+	SDL_Event event;
+	int quit = 0;
+	int quitGame = 0;	//Return value (quits the entire game)
+	int newEvent = 0;
+
+	coord selectedTile;
+	//int tokenId;
+	//int ownerId;
+
+	SDL_Rect cancelRect = targetDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, isMovement, pos);
+
+	while(!quit){
+		SDL_Delay(REFRESH_PERIOD);
+
+		//Events
+		while(SDL_PollEvent(&event)){
+			newEvent = events(event, camera, *game, &selectedTile);
+
+			//Menu
+			if(newEvent == MENU){
+				quitGame = inGameMenu(renderer, sprites, texture);
+				camera->leftClick = 0;
+				if(quitGame)
+					quit = 1;
+			}
+
+			//Cancel button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
+			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
+				quit = 1;
+			}
+
+			else if(newEvent == TILE_SELECTION){
+				*target = selectedTile;
+				quit = 1;
+			}
+		}
+
+		//Countdown
+		quit = countdownUpdate(countdown, countdownSec, quit, &newEvent, game);
+
+		//Refresh
+		if(newEvent){
+			targetDisplay(renderer, sprites, texture, *game, *camera, *countdownSec, isMovement, pos);
 		}
 	}
 
