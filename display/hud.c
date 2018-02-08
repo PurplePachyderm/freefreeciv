@@ -183,6 +183,8 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
     camera.zoom = 1;
     camera.leftClick = 0;
 
+	busyReset(&game); //Resets units so they can play
+
 	//First display before any event
 	SDL_Rect endButton = mainDisplay(renderer, texture, game, camera, countdownSec);
 
@@ -254,25 +256,88 @@ SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 	blitSprite(renderer, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
 
 
-	//Move button
-	blitSprite(renderer, texture, 4, 16, SCREEN_WIDTH/2-TILE_SIZE*2*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*2*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	//Stats
+	TTF_Font * font = TTF_OpenFont("resources/8bit.ttf", TILE_SIZE);
+	SDL_Color white = {255, 255, 255};
+	char text [6];
+
+	SDL_Rect srcRect;
+	SDL_Rect destRect;
+	float fontFactor = 0.9;
+
+	//Life
+	blitSprite(renderer, texture, 7, 25, 0, SCREEN_HEIGHT/2-TILE_SIZE*1.5*3/2, TILE_SIZE*1.5);
+
+	sprintf(text, "%dI%d", game.players[game.currentPlayer].units[peasantId].life, game.players[game.currentPlayer].units[peasantId].maxLife);
+
+	SDL_Surface * life = TTF_RenderText_Blended(font, text, white);
+	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, life);
+
+	setRectangle(&srcRect, 0, life->h-(life->h*fontFactor), life->w, life->h*fontFactor);
+	setRectangle(&destRect, TILE_SIZE*1.5, SCREEN_HEIGHT/2-TILE_SIZE*3/2*1.33, life->w, life->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(life);
+	SDL_DestroyTexture(textTexture);
 
 
-	//Attack button
-	blitSprite(renderer, texture, 5, 25, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	//Movements
+	blitSprite(renderer, texture, 4, 16, 0, SCREEN_HEIGHT/2-TILE_SIZE*1.5/2, TILE_SIZE*1.5);
+
+	sprintf(text, "%dI%d", game.players[game.currentPlayer].units[peasantId].movements, game.players[game.currentPlayer].units[peasantId].maxMovements);
+
+	SDL_Surface * movements = TTF_RenderText_Blended(font, text, white);
+	textTexture = SDL_CreateTextureFromSurface(renderer, movements);
+
+	setRectangle(&srcRect, 0, life->h-(movements->h*fontFactor), movements->w, movements->h*fontFactor);
+	setRectangle(&destRect, TILE_SIZE*1.5, SCREEN_HEIGHT/2-0.5*TILE_SIZE, movements->w, movements->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(movements);
+	SDL_DestroyTexture(textTexture);
 
 
-	//Harvest button
-	blitSprite(renderer, texture, 7, 14, SCREEN_WIDTH/2+TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2+TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	//Attack
+	blitSprite(renderer, texture, 5, 25, 0, SCREEN_HEIGHT/2+TILE_SIZE*1.5/2, TILE_SIZE*1.5);
+
+	sprintf(text, "%d", game.players[game.currentPlayer].units[peasantId].attack);
+
+	SDL_Surface * attack = TTF_RenderText_Blended(font, text, white);
+	textTexture = SDL_CreateTextureFromSurface(renderer, attack);
+
+	setRectangle(&srcRect, 0, attack->h-(attack->h*fontFactor), attack->w, attack->h*fontFactor);
+	setRectangle(&destRect, TILE_SIZE*1.5, SCREEN_HEIGHT/2+TILE_SIZE, attack->w, attack->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(attack);
+	SDL_DestroyTexture(textTexture);
 
 
-	//Build button
-	blitSprite(renderer, texture, 3, 2, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	TTF_CloseFont(font);
 
+	if(!game.players[game.currentPlayer].units[peasantId].isBusy){
+		//Move button
+		blitSprite(renderer, texture, 4, 16, SCREEN_WIDTH/2-TILE_SIZE*2*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+		blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*2*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+
+
+		//Attack button
+		blitSprite(renderer, texture, 5, 25, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+		blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+
+
+		//Harvest button
+		blitSprite(renderer, texture, 7, 14, SCREEN_WIDTH/2+TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+		blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2+TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+
+
+		//Build button
+		blitSprite(renderer, texture, 3, 2, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+		blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	}
+
+
+	//TODO Stats
 
 	SDL_RenderPresent(renderer);
 	return cancelRect;
@@ -287,6 +352,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 	int newEvent = 0;
 
 	coord target;
+	coord * path;
 	coord selectedTile;
 	//int tokenId;
 	//int ownerId;
@@ -317,12 +383,19 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 			//Move button
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*2*1.75 && event.button.x<SCREEN_WIDTH/2
+			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*2*1.75 && event.button.x<SCREEN_WIDTH/2-TILE_SIZE*1.75
 			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
 				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 1, selectedTile, &target);
-				if(quitGame)
-					quit = 1;
-				printf("Move to (%d, %d)\n", target.x, target.y);
+
+				int length = moveUnit(game, peasantId, target, &path);
+				if(length){
+					//TODO Animation
+					game->players[game->currentPlayer].units[peasantId].pos.x = target.x;
+					game->players[game->currentPlayer].units[peasantId].pos.y = target.y;
+
+					target.x = 0;
+					target.y = 0;
+				}
 			}
 		}
 
@@ -350,17 +423,76 @@ SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 	highlighterCoords.y = camera.offset.y+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].units[soldierId].pos.y);
 	blitSprite(renderer, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
 
-
-	//Move button
-	blitSprite(renderer, texture, 4, 16, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-
-
-	//Attack button
-	blitSprite(renderer, texture, 5, 25, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-	blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	if(!game.players[game.currentPlayer].units[soldierId].isBusy){
+		//Move button
+		blitSprite(renderer, texture, 4, 16, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+		blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
 
+		//Attack button
+		blitSprite(renderer, texture, 5, 25, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+		blitSprite(renderer, texture, game.currentPlayer+4, 43, SCREEN_WIDTH/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+	}
+
+
+	//Stats
+	TTF_Font * font = TTF_OpenFont("resources/8bit.ttf", TILE_SIZE);
+	SDL_Color white = {255, 255, 255};
+	char text [6];
+
+	SDL_Rect srcRect;
+	SDL_Rect destRect;
+	float fontFactor = 0.9;
+
+	//Life
+	blitSprite(renderer, texture, 7, 25, 0, SCREEN_HEIGHT/2-TILE_SIZE*1.5*3/2, TILE_SIZE*1.5);
+
+	sprintf(text, "%dI%d", game.players[game.currentPlayer].units[soldierId].life, game.players[game.currentPlayer].units[soldierId].maxLife);
+
+	SDL_Surface * life = TTF_RenderText_Blended(font, text, white);
+	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, life);
+
+	setRectangle(&srcRect, 0, life->h-(life->h*fontFactor), life->w, life->h*fontFactor);
+	setRectangle(&destRect, TILE_SIZE*1.5, SCREEN_HEIGHT/2-TILE_SIZE*3/2*1.33, life->w, life->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(life);
+	SDL_DestroyTexture(textTexture);
+
+
+	//Movements
+	blitSprite(renderer, texture, 4, 16, 0, SCREEN_HEIGHT/2-TILE_SIZE*1.5/2, TILE_SIZE*1.5);
+
+	sprintf(text, "%dI%d", game.players[game.currentPlayer].units[soldierId].movements, game.players[game.currentPlayer].units[soldierId].maxMovements);
+
+	SDL_Surface * movements = TTF_RenderText_Blended(font, text, white);
+	textTexture = SDL_CreateTextureFromSurface(renderer, movements);
+
+	setRectangle(&srcRect, 0, life->h-(movements->h*fontFactor), movements->w, movements->h*fontFactor);
+	setRectangle(&destRect, TILE_SIZE*1.5, SCREEN_HEIGHT/2-0.5*TILE_SIZE, movements->w, movements->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(movements);
+	SDL_DestroyTexture(textTexture);
+
+
+	//Attack
+	blitSprite(renderer, texture, 5, 25, 0, SCREEN_HEIGHT/2+TILE_SIZE*1.5/2, TILE_SIZE*1.5);
+
+	sprintf(text, "%d", game.players[game.currentPlayer].units[soldierId].attack);
+
+	SDL_Surface * attack = TTF_RenderText_Blended(font, text, white);
+	textTexture = SDL_CreateTextureFromSurface(renderer, attack);
+
+	setRectangle(&srcRect, 0, attack->h-(attack->h*fontFactor), attack->w, attack->h*fontFactor);
+	setRectangle(&destRect, TILE_SIZE*1.5, SCREEN_HEIGHT/2+TILE_SIZE, attack->w, attack->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(attack);
+	SDL_DestroyTexture(textTexture);
+
+
+	TTF_CloseFont(font);
 
 	SDL_RenderPresent(renderer);
 	return cancelRect;
@@ -375,6 +507,8 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 	int newEvent = 0;
 
 	coord selectedTile;
+	coord target;
+	coord * path;
 	//int tokenId;
 	//int ownerId;
 
@@ -400,6 +534,23 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
 			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
 				quit = 1;
+			}
+
+			//Move button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*1.75 && event.button.x<SCREEN_WIDTH/2
+			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
+				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 1, selectedTile, &target);
+
+				int length = moveUnit(game, soldierId, target, &path);
+				if(length){
+					//TODO Animation
+					game->players[game->currentPlayer].units[soldierId].pos.x = target.x;
+					game->players[game->currentPlayer].units[soldierId].pos.y = target.y;
+
+					target.x = 0;
+					target.y = 0;
+				}
 			}
 		}
 
@@ -427,20 +578,48 @@ SDL_Rect buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game ga
 	highlighterCoords.y = camera.offset.y+TILE_SIZE*camera.zoom*(game.players[game.currentPlayer].buildings[buildingId].pos.y);
 	blitSprite(renderer, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
 
+	if(!game.players[game.currentPlayer].buildings[buildingId].isBusy){
+		//Create Unit Button
+		switch(game.players[game.currentPlayer].buildings[buildingId].type){
+			case CITY:
+				blitSprite(renderer, texture, 7, 14, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+				break;
 
-	//Create Unit Button
-	switch(game.players[game.currentPlayer].buildings[buildingId].type){
-		case CITY:
-			blitSprite(renderer, texture, 7, 14, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
-			break;
+			case BARRACK:
+				blitSprite(renderer, texture, 7, 17, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+		}
+		blitSprite(renderer, texture, 4+game.currentPlayer, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 
-		case BARRACK:
-			blitSprite(renderer, texture, 7, 17, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
 	}
-	blitSprite(renderer, texture, 4+game.currentPlayer, 43, SCREEN_WIDTH/2-TILE_SIZE*1.75/2, SCREEN_HEIGHT-TILE_SIZE*1.75, TILE_SIZE*1.75);
+
+
+	//Stats
+	TTF_Font * font = TTF_OpenFont("resources/8bit.ttf", TILE_SIZE);
+	SDL_Color white = {255, 255, 255};
+	char text [6];
+
+	SDL_Rect srcRect;
+	SDL_Rect destRect;
+	float fontFactor = 0.9;
+
+	//Life
+	blitSprite(renderer, texture, 7, 25, 0, SCREEN_HEIGHT/2-TILE_SIZE*0.75, TILE_SIZE*1.5);
+
+	sprintf(text, "%dI%d", game.players[game.currentPlayer].buildings[buildingId].life, game.players[game.currentPlayer].buildings[buildingId].maxLife);
+
+	SDL_Surface * life = TTF_RenderText_Blended(font, text, white);
+	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, life);
+
+	setRectangle(&srcRect, 0, life->h-(life->h*fontFactor), life->w, life->h*fontFactor);
+	setRectangle(&destRect, TILE_SIZE*1.5, SCREEN_HEIGHT/2-0.5*TILE_SIZE, life->w, life->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(life);
+	SDL_DestroyTexture(textTexture);
+	TTF_CloseFont(font);
+
 
 	SDL_RenderPresent(renderer);
-
 	return cancelRect;
 }
 
@@ -510,10 +689,10 @@ SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game
 
 	SDL_Surface * messageSurf;
 	if(isMovement) {
-		messageSurf = TTF_RenderText_Blended(font, "SELECT DESTINATION (RIGHT CLICK)", white);
+		messageSurf = TTF_RenderText_Blended(font, "SELECT DESTINATION", white);
 	}
 	else{
-		messageSurf = TTF_RenderText_Blended(font, "SELECT TARGET (RIGHT CLICK)", white);
+		messageSurf = TTF_RenderText_Blended(font, "SELECT TARGET", white);
 	}
 
 	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, messageSurf);

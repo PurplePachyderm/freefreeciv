@@ -32,6 +32,7 @@ int main(int argc, char** argv){
 
 	SDL_Texture * texture = NULL;
 	texture = SDL_CreateTextureFromSurface(renderer, sprites);
+	SDL_FreeSurface(sprites);
 
 	TTF_Init();
 
@@ -45,7 +46,6 @@ int main(int argc, char** argv){
 
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);
-	SDL_FreeSurface(sprites);
 	SDL_DestroyTexture(texture);
 	TTF_Quit();
 	IMG_Quit();

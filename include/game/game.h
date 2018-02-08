@@ -104,3 +104,5 @@ int checkOwnUnit(game, coord pos);
 
 int checkForeignBuilding(game, coord pos, int * ownerId);
 int checkForeignUnit(game, coord pos, int * ownerId);
+
+void busyReset(game * game);

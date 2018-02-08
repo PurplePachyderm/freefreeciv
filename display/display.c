@@ -43,8 +43,8 @@ int events(SDL_Event event, view * camera, game game, coord * selectedTile){	//L
 
 	//Tile selection (less paramount than menu)
 	else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-	&& event.button.x >= camera->offset.x+TILE_SIZE*camera->zoom && event.button.x <= camera->offset.x + camera->zoom*TILE_SIZE*(MAP_SIZE-1)
-	&& event.button.y >= camera->offset.y+TILE_SIZE*camera->zoom && event.button.y <= camera->offset.y + camera->zoom*TILE_SIZE*(MAP_SIZE-1)){
+	&& event.button.x >= camera->offset.x+TILE_SIZE*camera->zoom && event.button.x <= camera->offset.x + camera->zoom*TILE_SIZE*(MAP_SIZE+1)
+	&& event.button.y >= camera->offset.y+TILE_SIZE*camera->zoom && event.button.y <= camera->offset.y + camera->zoom*TILE_SIZE*(MAP_SIZE+1)){
 		newEvent = TILE_SELECTION;
 
 		selectedTile->x = ((event.button.x - camera->offset.x) / (TILE_SIZE * camera->zoom));
