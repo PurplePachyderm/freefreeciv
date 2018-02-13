@@ -183,8 +183,6 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
     camera.zoom = 1;
     camera.leftClick = 0;
 
-	busyReset(&game); //Resets units so they can play
-
 	//First display before any event
 	SDL_Rect endButton = mainDisplay(renderer, texture, game, camera, countdownSec);
 
@@ -202,6 +200,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
 				countdown = TURN_TIME * 1000;	//Change current player
 				countdownSec = TURN_TIME;
 				game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
+				busyReset(&game); //Resets units
 			}
 
             switch(newEvent){
@@ -211,8 +210,9 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
                     break;
 
 				case TILE_SELECTION:
+					//Own unit
 					tokenId = checkOwnUnit(game, selectedTile);
-					if(tokenId < game.players[game.currentPlayer].nUnits){
+					if(tokenId < game.players[game.currentPlayer].nUnits){	//Cycles units
 						switch(game.players[game.currentPlayer].units[tokenId].type){
 
 							case PEASANT:
@@ -224,13 +224,26 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
 							break;
 						}
 					}
-					else{
+					else{	//Cycles buildingss
 						tokenId = checkOwnBuilding(game, selectedTile);
 						if(tokenId < game.players[game.currentPlayer].nBuildings){
 								buildingHud(renderer, texture, &game, &camera, &countdown, &countdownSec, tokenId);
 
 						}
 					}
+					//TODO Select also foreign Units
+					/*else{
+
+						int ownerId;
+						int isUnit = 1;
+						tokenId = checkForeignUnit(*game, selectedTile, &ownerId);
+						if(ownerId > game->nPlayers)
+							tokenId = checkForeignBuilding(*game, selectedTile, &ownerId);
+							isUnit = 0;
+
+						if(ownerId < game->nPlayers)
+							quit = foreignHud(renderer, texture, &game, &camera, &countdown, &countdownSec, ownerId, tokenId, isUnit);
+					}*/
             }
         }
 
@@ -397,6 +410,15 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 					target.y = 0;
 				}
 			}
+			//Attack Button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*1.75 && event.button.x<SCREEN_WIDTH/2
+			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
+				coord tokenPos = game->players[game->currentPlayer].units[peasantId].pos;
+				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 0, tokenPos, &target);
+
+				attack(game, peasantId, target);
+			}
 		}
 
 		//Countdown
@@ -509,8 +531,6 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 	coord selectedTile;
 	coord target;
 	coord * path;
-	//int tokenId;
-	//int ownerId;
 
 	SDL_Rect cancelRect = soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
 
@@ -551,6 +571,15 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 					target.x = 0;
 					target.y = 0;
 				}
+			}
+			//Attack button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>SCREEN_WIDTH/2 && event.button.x<SCREEN_WIDTH/2+TILE_SIZE*1.75
+			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
+				coord tokenPos = game->players[game->currentPlayer].units[soldierId].pos;
+				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 0, tokenPos, &target);
+
+				attack(game, soldierId, target);
 			}
 		}
 
@@ -708,10 +737,10 @@ SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game
 
 	//Highlighters
 	if(!isMovement){
-		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
-		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-2)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x+1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
 		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
-		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x-1)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-2)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y+1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
+		blitSprite(renderer, texture, 4+game.currentPlayer, 43, camera.offset.x+(pos.x)*TILE_SIZE*camera.zoom, camera.offset.y+(pos.y-1)*TILE_SIZE*camera.zoom, TILE_SIZE*camera.zoom);
 	}
 
 
@@ -773,3 +802,110 @@ int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view 
 
 	return quitGame;
 }
+
+
+
+//Foreign Token Hud
+SDL_Rect foreignDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int ownerId, int tokenId, int isUnit){
+	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
+
+	coord pos;
+
+	if(isUnit){
+		pos.x =	game.players[ownerId].units[tokenId].pos.x;
+		pos.y =	game.players[ownerId].units[tokenId].pos.y;
+	}
+	else{
+		pos.x =	game.players[ownerId].buildings[tokenId].pos.x;
+		pos.y =	game.players[ownerId].buildings[tokenId].pos.y;
+	}
+
+	//Highlighter
+	coord highlighterCoords;
+	highlighterCoords.x = camera.offset.x+TILE_SIZE*camera.zoom*(pos.x);
+	highlighterCoords.y = camera.offset.y+TILE_SIZE*camera.zoom*(pos.y);
+	blitSprite(renderer, texture, game.currentPlayer+4, 43, highlighterCoords.x, highlighterCoords.y, TILE_SIZE*camera.zoom);
+
+
+	//Stats
+	TTF_Font * font = TTF_OpenFont("resources/8bit.ttf", TILE_SIZE);
+	SDL_Color white = {255, 255, 255};
+	char text [6];
+
+	SDL_Rect srcRect;
+	SDL_Rect destRect;
+	float fontFactor = 0.9;
+
+	//Life
+	blitSprite(renderer, texture, 7, 25, 0, SCREEN_HEIGHT/2-TILE_SIZE*0.75, TILE_SIZE*1.5);
+
+	if(isUnit)
+		sprintf(text, "%dI%d", game.players[ownerId].units[tokenId].life, game.players[ownerId].units[tokenId].maxLife);
+	else
+		sprintf(text, "%dI%d", game.players[ownerId].buildings[tokenId].life, game.players[ownerId].buildings[tokenId].maxLife);
+
+	SDL_Surface * life = TTF_RenderText_Blended(font, text, white);
+	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, life);
+
+	setRectangle(&srcRect, 0, life->h-(life->h*fontFactor), life->w, life->h*fontFactor);
+	setRectangle(&destRect, TILE_SIZE*1.5, SCREEN_HEIGHT/2-0.5*TILE_SIZE, life->w, life->h*fontFactor);
+	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_FreeSurface(life);
+	SDL_DestroyTexture(textTexture);
+	TTF_CloseFont(font);
+
+
+	SDL_RenderPresent(renderer);
+	return cancelRect;
+}
+
+
+//Still trying to figure out what I did there
+/*
+int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int ownerId, int tokenId, int isUnit){
+	int quit = 0;
+	int quitGame = 0;	//Return value (quits the entire game)
+	int newEvent = 0;
+
+	coord selectedTile;
+	//int tokenId;
+	//int ownerId;
+
+	SDL_Rect cancelRect = buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+
+	while(!quit){
+		SDL_Delay(REFRESH_PERIOD);
+
+		//Events
+		while(SDL_PollEvent(&event)){
+			newEvent = events(event, camera, *game, &selectedTile);
+
+			//Menu
+			if(newEvent == MENU){
+				quitGame = inGameMenu(renderer, texture);
+				camera->leftClick = 0;
+				if(quitGame)
+					quit = 1;
+			}
+
+			//Cancel button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
+			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
+				quit = 1;
+			}
+		}
+
+		//Countdown
+		quit = countdownUpdate(countdown, countdownSec, quit, &newEvent, game);
+
+		//Refresh
+		if(newEvent){
+			buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+		}
+	}
+
+	return quitGame;
+}
+*/
