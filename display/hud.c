@@ -95,26 +95,36 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
 							break;
 						}
 					}
-					else{	//Cycles buildingss
+					else if(checkOwnBuilding(game, selectedTile) < game.players[game.currentPlayer].nBuildings){	//Cycles buildingss
 						tokenId = checkOwnBuilding(game, selectedTile);
 						if(tokenId < game.players[game.currentPlayer].nBuildings){
-								buildingHud(renderer, texture, &game, &camera, &countdown, &countdownSec, tokenId);
+								quit = buildingHud(renderer, texture, &game, &camera, &countdown, &countdownSec, tokenId);
+
+						}
+					}
+					else if(checkOwnUnit(game, selectedTile) < game.players[game.currentPlayer].nUnits){	//Cycles buildingss
+						tokenId = checkOwnBuilding(game, selectedTile);
+						if(tokenId < game.players[game.currentPlayer].nBuildings){
+								quit = buildingHud(renderer, texture, &game, &camera, &countdown, &countdownSec, tokenId);
 
 						}
 					}
 					//TODO Select also foreign Units
-					/*else{
+					else{
 
 						int ownerId;
 						int isUnit = 1;
-						tokenId = checkForeignUnit(*game, selectedTile, &ownerId);
-						if(ownerId > game->nPlayers)
-							tokenId = checkForeignBuilding(*game, selectedTile, &ownerId);
+						tokenId = checkForeignUnit(game, selectedTile, &ownerId);
+						if(ownerId > game.nPlayers){
+							tokenId = checkForeignBuilding(game, selectedTile, &ownerId);
 							isUnit = 0;
+						}
 
-						if(ownerId < game->nPlayers)
+
+						if(ownerId < game.nPlayers){
 							quit = foreignHud(renderer, texture, &game, &camera, &countdown, &countdownSec, ownerId, tokenId, isUnit);
-					}*/
+						}
+					}
             }
         }
 
@@ -171,6 +181,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*2*1.75 && event.button.x<SCREEN_WIDTH/2-TILE_SIZE*1.75
 			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
 				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 1, selectedTile, &target);
+				quit = quitGame;
 
 				int length = moveUnit(game, peasantId, target, &path);
 				if(length){
@@ -182,14 +193,38 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 					target.y = 0;
 				}
 			}
+
 			//Attack Button
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*1.75 && event.button.x<SCREEN_WIDTH/2
 			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
 				coord tokenPos = game->players[game->currentPlayer].units[peasantId].pos;
 				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 0, tokenPos, &target);
+				quit = quitGame;
 
 				attack(game, peasantId, target);
+			}
+
+			//Barrack Creation Button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>SCREEN_WIDTH/2 && event.button.x<SCREEN_WIDTH/2+TILE_SIZE*1.75
+			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
+				coord tokenPos = game->players[game->currentPlayer].units[peasantId].pos;
+				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 0, tokenPos, &target);
+				quit = quitGame;
+
+				createBarrack(game, target, peasantId);
+			}
+
+			//Collect Button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>SCREEN_WIDTH/2+TILE_SIZE*1.75 && event.button.x<SCREEN_WIDTH/2+TILE_SIZE*2*1.75
+			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
+				coord tokenPos = game->players[game->currentPlayer].units[peasantId].pos;
+				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 0, tokenPos, &target);
+				quit = quitGame;
+
+				collect(game, peasantId, target);
 			}
 		}
 
@@ -230,6 +265,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 			//Menu
 			if(newEvent == MENU){
 				quitGame = inGameMenu(renderer, texture);
+				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -247,6 +283,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*1.75 && event.button.x<SCREEN_WIDTH/2
 			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
 				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 1, selectedTile, &target);
+				quit = quitGame;
 
 				int length = moveUnit(game, soldierId, target, &path);
 				if(length){
@@ -264,6 +301,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
 				coord tokenPos = game->players[game->currentPlayer].units[soldierId].pos;
 				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 0, tokenPos, &target);
+				quit = quitGame;
 
 				attack(game, soldierId, target);
 			}
@@ -291,6 +329,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, vie
 	int newEvent = 0;
 
 	coord selectedTile;
+	coord target;
 	//int tokenId;
 	//int ownerId;
 
@@ -306,6 +345,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, vie
 			//Menu
 			if(newEvent == MENU){
 				quitGame = inGameMenu(renderer, texture);
+				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -316,6 +356,26 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, vie
 			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
 			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
 				quit = 1;
+			}
+
+			//Create unit button
+			//Attack Button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*1.75/2 && event.button.x<SCREEN_WIDTH/2+TILE_SIZE*1.75/2
+			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
+				coord tokenPos = game->players[game->currentPlayer].buildings[buildingId].pos;
+				quitGame = targetHud(renderer, texture, game, camera, countdown, countdownSec, 0, tokenPos, &target);
+				quit = quitGame;
+
+				switch(game->players[game->currentPlayer].buildings[buildingId].type){
+					case CITY:
+						createPeasant(game, target, buildingId);
+						break;
+
+					case BARRACK:
+						createSoldier(game, target, buildingId);
+						break;
+				}
 			}
 		}
 
@@ -391,18 +451,20 @@ int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view 
 
 
 //Foreign Token Hud
-//Still trying to figure out what I did there
-/*
+//XXX Not finished (Needs dedicated display function)
+
 int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int ownerId, int tokenId, int isUnit){
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
 	int newEvent = 0;
+	SDL_Event event;
 
 	coord selectedTile;
 	//int tokenId;
 	//int ownerId;
 
-	SDL_Rect cancelRect = buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+
+	SDL_Rect cancelRect = foreignDisplay(renderer, texture, *game, *camera, *countdownSec, ownerId, tokenId, isUnit);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -414,6 +476,7 @@ int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 			//Menu
 			if(newEvent == MENU){
 				quitGame = inGameMenu(renderer, texture);
+				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -432,10 +495,9 @@ int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 		//Refresh
 		if(newEvent){
-			buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+			foreignDisplay(renderer, texture, *game, *camera, *countdownSec, ownerId, tokenId, isUnit);
 		}
 	}
 
 	return quitGame;
 }
-*/

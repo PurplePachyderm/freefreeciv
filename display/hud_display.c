@@ -79,6 +79,8 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game,
 
 	//Finish turn/Cancel
 	//BUG Seems to be blinking sometimes (misses some frames randomly)
+	//Can probably fixed by putting directly a string instead of a variable
+	//Pass a boolean to the funcion in order to define message?
 	SDL_Surface * end = TTF_RenderText_Blended(font, message, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, end);
 
