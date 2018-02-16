@@ -15,7 +15,7 @@
 #include "../include/coord.h"
 
 //Basic functions (reused in several Huds)
-SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, char * message){
+void basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int isMainHud){
 	//Warning: Does not include RenderPresent
 	//Renders map, player indocator, countdown,
 
@@ -29,14 +29,6 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game,
     dispTokens(renderer, texture, camera, game);
 
 
-	//Menu cross
-	coord exitPos;  //Exit menu cross (right top corner)
-	exitPos.x = SCREEN_WIDTH - TILE_SIZE;
-	exitPos.y = 0;
-
-	blitSprite(renderer, texture, 5, 30, exitPos.x, exitPos.y, TILE_SIZE);
-
-
 	//Player indicator
 	SDL_Color colors [4] = {{224, 26, 26},	//Red
 	{55, 131, 206},	//Blue
@@ -44,12 +36,11 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game,
 	{255, 228, 58}};	//Yellow
 
 	TTF_Font * font = TTF_OpenFont("resources/8bit.ttf", SCREEN_HEIGHT/36);
-	//TTF_SetFontOutline(font, 2);
 
 	char playerText [9];
 	sprintf(playerText, "PLAYER %d", game.currentPlayer+1);
 
-	SDL_Surface * player = TTF_RenderText_Blended(font, playerText, colors[game.currentPlayer]);
+	SDL_Surface * player = TTF_RenderText_Solid(font, playerText, colors[game.currentPlayer]);
 	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, player);
 
 	setRectangle(&srcRect, 0, player->h-(player->h * fontFactor+1), player->w, player->h * fontFactor+1);
@@ -66,7 +57,7 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game,
 	char countdownText [4];
 	sprintf(countdownText, "%d", countdown);
 
-	SDL_Surface * countdownSurf = TTF_RenderText_Blended(font, countdownText, white);
+	SDL_Surface * countdownSurf = TTF_RenderText_Solid(font, countdownText, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, countdownSurf);
 
 	setRectangle(&srcRect, 0, countdownSurf->h-(countdownSurf->h * fontFactor+1), countdownSurf->w, countdownSurf->h * fontFactor+1);
@@ -78,29 +69,30 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game,
 
 
 	//Finish turn/Cancel
-	//BUG Seems to be blinking sometimes (misses some frames randomly)
-	//Can probably fixed by putting directly a string instead of a variable
-	//Pass a boolean to the funcion in order to define message?
-	SDL_Surface * end = TTF_RenderText_Blended(font, message, white);
-	textTexture = SDL_CreateTextureFromSurface(renderer, end);
 
-	setRectangle(&srcRect, 0, player->h-(player->h * fontFactor+1), end->w, end->h * fontFactor);
-	setRectangle(&destRect, SCREEN_WIDTH-end->w, SCREEN_HEIGHT-(end->h*fontFactor)-4, end->w, end->h * fontFactor);
-	SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+	if(isMainHud){
+		SDL_Surface * arrowSurf = arrowSurf = IMG_Load("resources/arrow.png");
 
-	SDL_FreeSurface(end);
-	SDL_DestroyTexture(textTexture);
+		SDL_Texture * arrow = SDL_CreateTextureFromSurface(renderer, arrowSurf);
+		SDL_FreeSurface(arrowSurf);
 
-	SDL_Rect returnValue = destRect;
+		setRectangle(&srcRect, 0, 0, 20, 20);
+		setRectangle(&destRect, SCREEN_WIDTH-TILE_SIZE*1.5, SCREEN_HEIGHT-TILE_SIZE*1.5, TILE_SIZE*1.5, TILE_SIZE*1.5);
+		SDL_RenderCopy(renderer, arrow, &srcRect, &destRect);
+		SDL_DestroyTexture(arrow);
+	}
+
+	else
+		blitSprite(renderer, texture, 5, 30, SCREEN_WIDTH-TILE_SIZE*1.5, SCREEN_HEIGHT-TILE_SIZE*1.5, TILE_SIZE*1.5);
 
 
 	//Gold indicator
 	//Opening and closing font w/ different size would cause text to blink, so we need to change it in destRect
 
 	char goldText [4];
-	sprintf(goldText, "%d", game.players[game.currentPlayer].gold);
+	sprintf(goldText, "%d", game.players[game.currentPlayer].gold);	//Gold indicator
 
-	SDL_Surface * gold = TTF_RenderText_Blended(font, goldText, white);
+	SDL_Surface * gold = TTF_RenderText_Solid(font, goldText, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, gold);
 
 	setRectangle(&srcRect, 0, gold->h-(gold->h * fontFactor), gold->w, gold->h * fontFactor);
@@ -117,7 +109,7 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game,
 	char woodText [4];
 	sprintf(woodText, "%d", game.players[game.currentPlayer].wood);
 
-	SDL_Surface * wood = TTF_RenderText_Blended(font, woodText, white);
+	SDL_Surface * wood = TTF_RenderText_Solid(font, woodText, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, wood);
 
 	setRectangle(&srcRect, 0, gold->h-(gold->h * fontFactor), wood->w, wood->h * fontFactor);
@@ -131,24 +123,22 @@ SDL_Rect basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game,
 
 	TTF_CloseFont(font);
 
-	return returnValue;	//Coords of 'End turn' button (needed for event)
 }
 
 
 
 
 //Huds
-SDL_Rect mainDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown){
-	SDL_Rect turnRect = basicDisplay(renderer, texture, game, camera, countdown, "END TURN");
+void mainDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown){
+	basicDisplay(renderer, texture, game, camera, countdown, 1);
 
 	SDL_RenderPresent(renderer);
-	return turnRect;
 }
 
 
 
-SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int peasantId){
-	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
+void peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int peasantId){
+	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	//Highlighter
 	coord highlighterCoords;
@@ -171,7 +161,7 @@ SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 
 	sprintf(text, "%dI%d", game.players[game.currentPlayer].units[peasantId].life, game.players[game.currentPlayer].units[peasantId].maxLife);
 
-	SDL_Surface * life = TTF_RenderText_Blended(font, text, white);
+	SDL_Surface * life = TTF_RenderText_Solid(font, text, white);
 	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, life);
 
 	setRectangle(&srcRect, 0, life->h-(life->h*fontFactor), life->w, life->h*fontFactor);
@@ -187,7 +177,7 @@ SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 
 	sprintf(text, "%dI%d", game.players[game.currentPlayer].units[peasantId].movements, game.players[game.currentPlayer].units[peasantId].maxMovements);
 
-	SDL_Surface * movements = TTF_RenderText_Blended(font, text, white);
+	SDL_Surface * movements = TTF_RenderText_Solid(font, text, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, movements);
 
 	setRectangle(&srcRect, 0, life->h-(movements->h*fontFactor), movements->w, movements->h*fontFactor);
@@ -203,7 +193,7 @@ SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 
 	sprintf(text, "%d", game.players[game.currentPlayer].units[peasantId].attack);
 
-	SDL_Surface * attack = TTF_RenderText_Blended(font, text, white);
+	SDL_Surface * attack = TTF_RenderText_Solid(font, text, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, attack);
 
 	setRectangle(&srcRect, 0, attack->h-(attack->h*fontFactor), attack->w, attack->h*fontFactor);
@@ -241,13 +231,13 @@ SDL_Rect peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 	//TODO Stats
 
 	SDL_RenderPresent(renderer);
-	return cancelRect;
+
 }
 
 
 
-SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int soldierId){
-	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
+void soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int soldierId){
+	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	//Highlighter
 	coord highlighterCoords;
@@ -281,7 +271,7 @@ SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 
 	sprintf(text, "%dI%d", game.players[game.currentPlayer].units[soldierId].life, game.players[game.currentPlayer].units[soldierId].maxLife);
 
-	SDL_Surface * life = TTF_RenderText_Blended(font, text, white);
+	SDL_Surface * life = TTF_RenderText_Solid(font, text, white);
 	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, life);
 
 	setRectangle(&srcRect, 0, life->h-(life->h*fontFactor), life->w, life->h*fontFactor);
@@ -297,7 +287,7 @@ SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 
 	sprintf(text, "%dI%d", game.players[game.currentPlayer].units[soldierId].movements, game.players[game.currentPlayer].units[soldierId].maxMovements);
 
-	SDL_Surface * movements = TTF_RenderText_Blended(font, text, white);
+	SDL_Surface * movements = TTF_RenderText_Solid(font, text, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, movements);
 
 	setRectangle(&srcRect, 0, life->h-(movements->h*fontFactor), movements->w, movements->h*fontFactor);
@@ -313,7 +303,7 @@ SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 
 	sprintf(text, "%d", game.players[game.currentPlayer].units[soldierId].attack);
 
-	SDL_Surface * attack = TTF_RenderText_Blended(font, text, white);
+	SDL_Surface * attack = TTF_RenderText_Solid(font, text, white);
 	textTexture = SDL_CreateTextureFromSurface(renderer, attack);
 
 	setRectangle(&srcRect, 0, attack->h-(attack->h*fontFactor), attack->w, attack->h*fontFactor);
@@ -327,13 +317,13 @@ SDL_Rect soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 	TTF_CloseFont(font);
 
 	SDL_RenderPresent(renderer);
-	return cancelRect;
+
 }
 
 
 
-SDL_Rect buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int buildingId){
-	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
+void buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int buildingId){
+	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	//Highlighter
 	coord highlighterCoords;
@@ -370,7 +360,7 @@ SDL_Rect buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game ga
 
 	sprintf(text, "%dI%d", game.players[game.currentPlayer].buildings[buildingId].life, game.players[game.currentPlayer].buildings[buildingId].maxLife);
 
-	SDL_Surface * life = TTF_RenderText_Blended(font, text, white);
+	SDL_Surface * life = TTF_RenderText_Solid(font, text, white);
 	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, life);
 
 	setRectangle(&srcRect, 0, life->h-(life->h*fontFactor), life->w, life->h*fontFactor);
@@ -383,13 +373,13 @@ SDL_Rect buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game ga
 
 
 	SDL_RenderPresent(renderer);
-	return cancelRect;
+
 }
 
 
 
-SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int isMovement, coord pos){
-	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
+void targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int isMovement, coord pos){
+	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	SDL_Rect srcRect;
 	SDL_Rect destRect;
@@ -402,10 +392,10 @@ SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game
 
 	SDL_Surface * messageSurf;
 	if(isMovement) {
-		messageSurf = TTF_RenderText_Blended(font, "SELECT DESTINATION", white);
+		messageSurf = TTF_RenderText_Solid(font, "SELECT DESTINATION", white);
 	}
 	else{
-		messageSurf = TTF_RenderText_Blended(font, "SELECT TARGET", white);
+		messageSurf = TTF_RenderText_Solid(font, "SELECT TARGET", white);
 	}
 
 	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, messageSurf);
@@ -429,13 +419,13 @@ SDL_Rect targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game
 
 
 	SDL_RenderPresent(renderer);
-	return cancelRect;
+
 }
 
 
 
-SDL_Rect foreignDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int ownerId, int tokenId, int isUnit){
-	SDL_Rect cancelRect = basicDisplay(renderer, texture, game, camera, countdown, "CANCEL");
+void foreignDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int ownerId, int tokenId, int isUnit){
+	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	coord pos;
 
@@ -472,7 +462,7 @@ SDL_Rect foreignDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 	else
 		sprintf(text, "%dI%d", game.players[ownerId].buildings[tokenId].life, game.players[ownerId].buildings[tokenId].maxLife);
 
-	SDL_Surface * life = TTF_RenderText_Blended(font, text, white);
+	SDL_Surface * life = TTF_RenderText_Solid(font, text, white);
 	SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, life);
 
 	setRectangle(&srcRect, 0, life->h-(life->h*fontFactor), life->w, life->h*fontFactor);
@@ -485,5 +475,5 @@ SDL_Rect foreignDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game gam
 
 
 	SDL_RenderPresent(renderer);
-	return cancelRect;
+
 }

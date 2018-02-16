@@ -32,12 +32,7 @@ int events(SDL_Event event, view * camera, game game, coord * selectedTile){	//L
 	//Otherwise, take the value of the associated event (to trigger menu etc if necessary)
 
 	//Menu selection
-	if(event.type == SDL_MOUSEBUTTONDOWN
-	&& event.button.button == SDL_BUTTON_LEFT
-	&& event.button.x >= SCREEN_WIDTH - TILE_SIZE && event.button.y <= TILE_SIZE){
-		newEvent = MENU;   //Triggers Menu
-	}
-	else if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
+	if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
 		newEvent = MENU;
 	}
 

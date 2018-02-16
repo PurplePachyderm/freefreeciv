@@ -54,8 +54,10 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
     camera.zoom = 1;
     camera.leftClick = 0;
 
+
 	//First display before any event
-	SDL_Rect endButton = mainDisplay(renderer, texture, game, camera, countdownSec);
+	mainDisplay(renderer, texture, game, camera, countdownSec);
+
 
     while(!quit){
         SDL_Delay(REFRESH_PERIOD);
@@ -65,18 +67,24 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
 
 			//End turn (potentially overrides TILE_SELECTION)
 			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x >= endButton.x && event.button.x <= endButton.x + endButton.w
-			&& event.button.y >= endButton.y && event.button.y <= endButton.y + endButton.h){
-				newEvent = END_TURN;
-				countdown = TURN_TIME * 1000;	//Change current player
-				countdownSec = TURN_TIME;
-				game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
-				busyReset(&game); //Resets units
+			&& event.button.x >= SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y >= SCREEN_HEIGHT-TILE_SIZE*1.5){
+				int validNewPlayer = 0;
+
+				while(!validNewPlayer){
+					newEvent = END_TURN;
+					countdown = TURN_TIME * 1000;	//Change current player
+					countdownSec = TURN_TIME;
+					game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
+					busyReset(&game); //Resets units
+
+					if(game.players[game.currentPlayer].nBuildings > 0)	//Player has not lost
+						validNewPlayer = 1;
+				}
 			}
 
             switch(newEvent){
                 case MENU:
-                    quit = inGameMenu(renderer, texture);
+                    quit = inGameMenu(renderer);
 					camera.leftClick = 0;	//Avoids moving camera if menu entered w click and left with Escp
                     break;
 
@@ -109,7 +117,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
 
 						}
 					}
-					//TODO Select also foreign Units
+					//Foreign unit selection
 					else{
 
 						int ownerId;
@@ -152,7 +160,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 	//int tokenId;
 	//int ownerId;
 
-	SDL_Rect cancelRect = peasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId);
+	peasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -163,7 +171,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, texture);
+				quitGame = inGameMenu(renderer);
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -171,8 +179,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 			//Cancel button
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
-			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
+			&& event.button.x>SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.5){
 				quit = 1;
 			}
 
@@ -253,7 +260,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 	coord target;
 	coord * path;
 
-	SDL_Rect cancelRect = soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
+	soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -264,7 +271,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, texture);
+				quitGame = inGameMenu(renderer);
 				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
@@ -273,8 +280,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 			//Cancel button
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
-			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
+			&& event.button.x>SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.5){
 				quit = 1;
 			}
 
@@ -333,7 +339,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, vie
 	//int tokenId;
 	//int ownerId;
 
-	SDL_Rect cancelRect = buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+	buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -344,7 +350,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, vie
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, texture);
+				quitGame = inGameMenu(renderer);
 				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
@@ -353,8 +359,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, vie
 
 			//Cancel button
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
-			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
+			&& event.button.x>SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.5){
 				quit = 1;
 			}
 
@@ -406,7 +411,7 @@ int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view 
 	//int tokenId;
 	//int ownerId;
 
-	SDL_Rect cancelRect = targetDisplay(renderer, texture, *game, *camera, *countdownSec, isMovement, pos);
+	targetDisplay(renderer, texture, *game, *camera, *countdownSec, isMovement, pos);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -417,7 +422,7 @@ int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view 
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, texture);
+				quitGame = inGameMenu(renderer);
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -425,8 +430,7 @@ int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view 
 
 			//Cancel button
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
-			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
+			&& event.button.x>SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.5){
 				quit = 1;
 			}
 
@@ -464,7 +468,7 @@ int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 	//int ownerId;
 
 
-	SDL_Rect cancelRect = foreignDisplay(renderer, texture, *game, *camera, *countdownSec, ownerId, tokenId, isUnit);
+	foreignDisplay(renderer, texture, *game, *camera, *countdownSec, ownerId, tokenId, isUnit);
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -475,7 +479,7 @@ int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, texture);
+				quitGame = inGameMenu(renderer);
 				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
@@ -484,8 +488,7 @@ int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 			//Cancel button
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x>cancelRect.x && event.button.x<cancelRect.x+cancelRect.w
-			&& event.button.y>cancelRect.y && event.button.y<cancelRect.y+cancelRect.y){
+			&& event.button.x>SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.5){
 				quit = 1;
 			}
 		}

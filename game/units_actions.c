@@ -216,34 +216,13 @@ void attack(game * game, int unitId, coord targetPos){
                         }
 
                         //Death of city (player looses)
-                        //BUG Free/realloc causes crash
+                        //Player conserved, units/buildings are freed
                         else if(game->players[i].buildings[j].life <= 0){
-                            game->nPlayers--;
-                            player * newPlayers;   //Reallocating players
-                            newPlayers = (player*) malloc(game->nPlayers * sizeof(player));
+                            free(game->players[i].buildings);
+                            free(game->players[i].units);
 
-                            int id = 0;
-                            for(int k=0; k<game->nPlayers+1; k++){
-                                 if(k != i){
-                                     newPlayers[id] = game->players[k];
-
-                                     newPlayers[id].units = (unit*) malloc(newPlayers[id].nUnits * sizeof(unit));
-                                     for(int l=0; l<newPlayers[id].nUnits; i++){
-                                         newPlayers[id].units[l] = game->players[k].units[l];
-                                     }
-
-                                     newPlayers[id].buildings = (building*) malloc(newPlayers[id].nBuildings * sizeof(building));
-                                     for(int l=0; l<newPlayers[id].nBuildings; i++){
-                                         newPlayers[id].buildings[l] = game->players[k].buildings[l];
-                                     }
-                                     id++;
-                                 }
-                                 free(game->players[k].units);
-                                 free(game->players[k].buildings);
-                            }
-
-                            free(game->players);
-                            game->players = newPlayers;
+                            game->players[i].nUnits = 0;
+                            game->players[i].nBuildings = 0;
 
                             break;
                         }
