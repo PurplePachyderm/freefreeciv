@@ -192,9 +192,8 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 				int length = moveUnit(game, peasantId, target, &path);
 				if(length){
-					//TODO Animation
-					game->players[game->currentPlayer].units[peasantId].pos.x = target.x;
-					game->players[game->currentPlayer].units[peasantId].pos.y = target.y;
+					movementAnim(renderer, texture, *camera, game, path, length, peasantId);
+					free(path);
 
 					target.x = 0;
 					target.y = 0;
@@ -293,9 +292,8 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 				int length = moveUnit(game, soldierId, target, &path);
 				if(length){
-					//TODO Animation
-					game->players[game->currentPlayer].units[soldierId].pos.x = target.x;
-					game->players[game->currentPlayer].units[soldierId].pos.y = target.y;
+					movementAnim(renderer, texture, *camera, game, path, length, soldierId);
+					free(path);
 
 					target.x = 0;
 					target.y = 0;

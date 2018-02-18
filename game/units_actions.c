@@ -245,12 +245,14 @@ void createPeasant(game * game, coord pos, int cityId){
     int distY = abs(game->players[game->currentPlayer].buildings[cityId].pos.y - pos.y);
     int dist = distX + distY;
 
-    if(dist == 1 && !checkMap(*game, pos)){
+    if(dist == 1 && !checkMap(*game, pos) && game->players[game->currentPlayer].gold >= 2){
         game->players[game->currentPlayer].nUnits++;
         game->players[game->currentPlayer].units = (unit*) realloc(game->players[game->currentPlayer].units, game->players[game->currentPlayer].nUnits * sizeof(unit));
 
         initPeasant(&game->players[game->currentPlayer].units[game->players[game->currentPlayer].nUnits-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].buildings[cityId].isBusy = 1;
+
+        game->players[game->currentPlayer].gold -= 2;   //Peasant Cost
     }
 }
 
@@ -261,12 +263,14 @@ void createSoldier(game * game, coord pos, int barrackId){
     int distY = abs(game->players[game->currentPlayer].buildings[barrackId].pos.y - pos.y);
     int dist = distX + distY;
 
-    if(dist == 1 && !checkMap(*game, pos)){
+    if(dist == 1 && !checkMap(*game, pos) && game->players[game->currentPlayer].gold >= 3){
         game->players[game->currentPlayer].nUnits++;
         game->players[game->currentPlayer].units = (unit*) realloc(game->players[game->currentPlayer].units, game->players[game->currentPlayer].nUnits * sizeof(unit));
 
         initSoldier(&game->players[game->currentPlayer].units[game->players[game->currentPlayer].nUnits-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].buildings[barrackId].isBusy = 1;
+
+        game->players[game->currentPlayer].gold -= 3;   //Soldier Cost
     }
 }
 
@@ -278,10 +282,12 @@ void createBarrack(game * game, coord pos, int peasantId){
     int dist = distX + distY;
 
 
-    if(dist == 1 && !checkMap(*game, pos)){
+    if(dist == 1 && !checkMap(*game, pos) && game->players[game->currentPlayer].wood >= 5){
         game->players[game->currentPlayer].nBuildings++;
         game->players[game->currentPlayer].buildings = (building*) realloc(game->players[game->currentPlayer].buildings, game->players[game->currentPlayer].nBuildings * sizeof(building));
         initBarrack(&game->players[game->currentPlayer].buildings[game->players[game->currentPlayer].nBuildings-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].units[peasantId].isBusy = 1;
+
+        game->players[game->currentPlayer].wood -= 5;   //Barrack Cost
     }
 }

@@ -40,7 +40,6 @@ int main(int argc, char** argv){
 	game game;
 	loadSave("test", &game);
 
-	game.players[0].buildings[0].life = 1;
 
 		//Main menu (game hud for now)
 	mainHud(renderer, texture, game);

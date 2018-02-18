@@ -3,6 +3,8 @@
 #include <SDL2/SDL.h>
 #include "../include/game/game.h"
 #include "../include/display/display.h"
+#include "../include/display/map_display.h"
+#include "../include/display/tokens_display.h"
 
 
 void setRectangle(SDL_Rect * rect, int x, int y, int w, int h){
@@ -100,4 +102,18 @@ int events(SDL_Event event, view * camera, game game, coord * selectedTile){	//L
 
 	return newEvent;
 
+}
+
+
+
+void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view camera, game * game, coord * path, int length, int tokenId){
+	for(int i=0; i<length; i++){
+		game->players[game->currentPlayer].units[tokenId].pos = path[i];
+
+		dispMap(renderer, texture, camera);
+		dispTokens(renderer, texture, camera, *game);
+		SDL_RenderPresent(renderer);
+
+		SDL_Delay(500);
+	}
 }
