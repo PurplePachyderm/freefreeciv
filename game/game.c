@@ -43,7 +43,6 @@ int checkOwnUnit(game game, coord pos){
 
     if(!unitFound)
         unitId = game.players[game.currentPlayer].nUnits;
-
     return unitId;
 }
 

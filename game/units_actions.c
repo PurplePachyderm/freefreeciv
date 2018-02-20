@@ -161,21 +161,13 @@ void attack(game * game, int unitId, coord targetPos){
 
                         //Death of unit
                         if(game->players[i].units[j].life <= 0){
+                            //Putting dead unit at end of array
+                            unit bufferUnit = game->players[i].units[j];
+                            game->players[i].units[j] = game->players[i].units[game->players[i].nUnits-1];
+                            game->players[i].units[game->players[i].nUnits-1] = bufferUnit;
+
                             game->players[i].nUnits--;
-                            unit * newUnits;  //Manual realloc of array
-                            newUnits = (unit*) malloc (game->players[i].nUnits * sizeof(unit));
-
-                            int id = 0; //We need a separate counter since it must not be incremented for the dead unit
-                            for(int k=0; k<game->players[i].nUnits; k++){
-
-                                if(k != j){ //Not recreating dead unit
-                                    newUnits[id] = game->players[i].units[k];
-                                    id++;
-                                }
-
-                                free(game->players[i].units);
-                                game->players[i].units = newUnits;
-                            }
+                            game->players[i].units = (unit*) realloc (game->players[i].units, game->players[i].nUnits * sizeof(unit));
                         }
                         break;
                     }
@@ -195,25 +187,23 @@ void attack(game * game, int unitId, coord targetPos){
                         game->players[i].buildings[j].life -= game->players[game->currentPlayer].units[unitId].attack;
 
                         //Death of building (not city)
-                        if(game->players[i].buildings[j].life <= 0 && game->players[i].buildings[j].type != CITY){
-                            printf("Destroying building, type = %d\n", game->players[i].buildings[j].type);
-                            game->players[i].nBuildings--;
-                            building * newBuildings;    //Reallocating buildings
-                            newBuildings = (building*) malloc(game->players[i].nBuildings * sizeof(building));
+                        if(game->players[i].buildings[j].life <= 0 && game->players[i].buildings[j].type != CITY){                              game->players[i].nBuildings--;
+                              building * newBuildings;    //Reallocating buildings
+                              newBuildings = (building*) malloc(game->players[i].nBuildings * sizeof(building));
 
-                            int id = 0; //Idem units
-                            for(int k=0; k<game->players[i].nBuildings; k++){
+                              int id = 0; //Idem units
+                              for(int k=0; k<game->players[i].nBuildings; k++){
 
-                                if(k != j){
-                                    newBuildings[id] = game->players[i].buildings[k];
-                                    id++;
-                                }
+                                  if(k != j){
+                                      newBuildings[id] = game->players[i].buildings[k];
+                                      id++;
+                                  }
+                              }
 
-                                free(game->players[i].buildings);
-                                game->players[i].buildings = newBuildings;
-                            }
-                            break;
+                                  free(game->players[i].buildings);
+                                  game->players[i].buildings = newBuildings;
                         }
+
 
                         //Death of city (player looses)
                         //Player conserved, units/buildings are freed
