@@ -3,105 +3,101 @@
 #include <time.h>
 #include <math.h>
 
-#define DISTANCE_MIN 8
-#define DISTANCE_MIN_RES 2
-#define NBR_RESSOURCES 10
-#define GEN_MAX 15
-#define GOLD 0
-#define WOOD 1
+#include "../include/game/map.h"
+#include "../include/game/game.h"
+#include "../include/game/units_actions.h"
 
-typedef struct
-{
-	int x;
-	int y;
-}coord;
+//XXX Needs testing
 
-typedef struct
-{
-	coord pos;
-	int type;
-}ressources;
+void genSpawns(game * game){
+	int dist;
+	int validCoords = 0;
 
-void gen_points(coord* j1, coord* j2);
-void gen_ressources(ressources* res);
-void distances_points(coord* j1,coord* j2,ressources* res);
+	do{
+		//Generation
+		for(int i=0; i<game->nPlayers; i++){
+			game->players[i].buildings[0].pos.x = (rand()%MAP_SIZE)+1;
+			game->players[i].buildings[0].pos.y = (rand()%MAP_SIZE)+1;
 
-int main()
-{
-	coord joueur1,joueur2;
-	ressources res_main;
-	srand(time(NULL));
+			int peasantPos = rand()%4;	//Randomizes starting pos of peasant
 
-	distances_points(&joueur1,&joueur2,&res_main);
-	system("pause");
+			switch(peasantPos){
+				case 0:	//Up
+					game->players[i].units[0].pos.x = game->players[i].buildings[0].pos.x - 1;
+					game->players[i].units[0].pos.y = game->players[i].buildings[0].pos.y;
+					break;
 
-	return 0;
-}
+				case 1:	//Right
+					game->players[i].units[0].pos.x = game->players[i].buildings[0].pos.x;
+					game->players[i].units[0].pos.y = game->players[i].buildings[0].pos.y + 1;
+					break;
 
-void gen_points(coord* j1, coord* j2)
-{
-	int a,b,c;
-	do
-	{
-    	j1->x=rand()%GEN_MAX;
-    	j1->y=rand()%GEN_MAX;
-    	j2->x=rand()%GEN_MAX;
-    	j2->y=rand()%GEN_MAX;
-		a=abs(j1->x-j2->x);
-		b=abs(j1->y-j2->y);
-		c=a+b;
-    }while(j1->x==j2->x && j1->y==j2->y && c<DISTANCE_MIN);
-}
+				case 2:	//Bottom
+					game->players[i].units[0].pos.x = game->players[i].buildings[0].pos.x + 1;
+					game->players[i].units[0].pos.y = game->players[i].buildings[0].pos.y;
+					break;
 
-void gen_ressources(ressources* res)
-{
-	int i=0;
-	res=(ressources*)malloc(sizeof(ressources)*NBR_RESSOURCES);
-
-	for(i=0;i<NBR_RESSOURCES;i++)
-	{
-			res[i].pos.x=rand()%GEN_MAX;
-			res[i].pos.y=rand()%GEN_MAX;
-			if(i<5)
-				res[i].type=GOLD;
-			else
-				res[i].type=WOOD;
-	}
-}
-
-void distances_points(coord* j1,coord* j2,ressources* res)
-{
-	int a,b,c,d,e,f;
-	int i=0;
-	gen_ressources(res);
-	gen_points(j1,j2);
-	for(i=0;i<NBR_RESSOURCES;i++)
-	{
-		if(i<5)
-		{
-			res[i].type=GOLD;
-			do
-			{
-				a=abs(j1->x-res[i].pos.x);
-				b=abs(j1->y-res[i].pos.y);
-				c=abs(j2->x-res[i].pos.x);
-				d=abs(j2->y-res[i].pos.y);
-				e=a+b;
-				f=c+d;
-			}while(e<DISTANCE_MIN_RES && f<DISTANCE_MIN_RES);
+				case 3:	//Left
+					game->players[i].units[0].pos.x = game->players[i].buildings[0].pos.x;
+					game->players[i].units[0].pos.y = game->players[i].buildings[0].pos.y - 1;
+					break;
+			}
 		}
-		else
-		{
-			res[i].type=WOOD;
-			do
-			{
-				a=abs(j1->x-res[i].pos.x);
-				b=abs(j1->y-res[i].pos.y);
-				c=abs(j2->x-res[i].pos.x);
-				d=abs(j2->y-res[i].pos.y);
-				e=a+b;
-				f=c+d;
-			}while(e<DISTANCE_MIN_RES && f<DISTANCE_MIN_RES);
+
+		//Verification
+		validCoords = 1;
+		for(int i=0; i<game->nPlayers; i++){
+			for(int j=0; j<i; j++){
+
+				int distX = abs(game->players[i].buildings[0].pos.x - game->players[j].buildings[0].pos.x);
+				int distY = abs(game->players[i].buildings[0].pos.y - game->players[j].buildings[0].pos.y);
+				dist = distX + distY;
+
+				if(dist <= MIN_DIST){
+					validCoords = 0;
+					break;
+				}
+
+			}
+			if(validCoords)
+				validCoords = !checkMap(*game, game->players[i].units[0].pos);
+
+			if(!validCoords)
+				break;
 		}
-	}
+
+    }while(!validCoords);
+}
+
+
+
+void genResources(game * game){
+	game->map.nResources = (N_RESOURCES + game->nPlayers - 2)*2;	//N_RESOURCES is the number for each type
+	game->map.resources = (resource*)malloc(sizeof(resource)*game->map.nResources);
+
+	int validCoords = 0;
+
+	do{
+		//Generation
+		for(int i=0; i<game->map.nResources*2; i++){
+				game->map.resources[i].pos.x=(rand()%MAP_SIZE)+1;
+				game->map.resources[i].pos.y=(rand()%MAP_SIZE)+1;
+
+				if(i < game->map.nResources/2)
+					game->map.resources[i].type=GOLD;
+				else
+					game->map.resources[i].type=WOOD;
+		}
+
+		//Validation
+		validCoords = 1;
+		for(int i=0; i<game->map.nResources*2; i++){
+			validCoords = !checkMap(*game, game->map.resources[i].pos);
+
+			if(!validCoords)
+				break;
+		}
+
+	}while(!validCoords);
+
 }

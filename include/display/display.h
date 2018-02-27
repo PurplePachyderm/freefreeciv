@@ -1,5 +1,10 @@
 #pragma once
 
+#include "../coord.h"
+#include "../game/game.h"
+
+//Essential macros/functions for display, game and camera events management
+
     //Macros
 #define REFRESH_PERIOD 17
 #define SCREEN_WIDTH 1920
@@ -12,6 +17,12 @@
 
 #define ZOOM_FACTOR 0.25
 
+    //Event macros (defines types of events)
+#define MENU 1
+#define TILE_SELECTION 2
+#define CAMERA 3
+#define END_TURN 4
+
 
     //Structures
 typedef struct{
@@ -23,6 +34,8 @@ typedef struct{
 
 //Prototypes
 void setRectangle(SDL_Rect * rect, int x, int y, int w, int h);
-void blitSprite(SDL_Renderer * renderer,  SDL_Surface * sprites, SDL_Texture * texture, int xSprite, int ySprite, int x, int y, int width);
+void blitSprite(SDL_Renderer * renderer, SDL_Texture * texture, int xSprite, int ySprite, int x, int y, int width);
 
-int cameraEvents(SDL_Event * event, view * camera);
+int events(SDL_Event event, view *camera, game game, coord * selectedTile);
+
+void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view camera, game * game, coord * path, int length, int tokenId);

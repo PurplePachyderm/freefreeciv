@@ -3,7 +3,10 @@
 #include <math.h>
 #include "../include/game/units_actions.h"
 #include "../include/game/game.h"
+#include "../include/game/structures_init.h"
 
+
+//XXX NEEDS TESTING
 
 int checkMap(game game, coord pos){
     //Iterates all game objects to check if a tile is free
@@ -77,19 +80,19 @@ void pathTesting(game game, coord startPos, coord targetPos, int size, coord * p
 
 
 
-int moveUnit(game * game, int ownerId, int unitId, coord targetPos, coord ** path){
+int moveUnit(game * game, int unitId, coord targetPos, coord ** path){
     //Returns 0 if no pass has been found, otherwise returns its length
-    coord startPos = game->players[ownerId].units[unitId].pos;
+    coord startPos = game->players[game->currentPlayer].units[unitId].pos;
     int size = 0;
 
-    int distX = abs(targetPos.x-game->players[ownerId].units[unitId].pos.x);
-    int distY = abs(targetPos.y-game->players[ownerId].units[unitId].pos.y);
-    int dist = distX+distY;
+    int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
+    int distY = abs(targetPos.y-game->players[game->currentPlayer].units[unitId].pos.y);
+    int dist = distX + distY;
 
-    if(dist<=game->players[ownerId].units[unitId].movements && !checkMap(*game, targetPos)){
+    if(dist<=game->players[game->currentPlayer].units[unitId].movements && !checkMap(*game, targetPos)){
 
         //Tests all path possibilities from shortest to longest
-        for(int i=dist; i<=game->players[ownerId].units[unitId].movements; i++){
+        for(int i=dist; i<=game->players[game->currentPlayer].units[unitId].movements; i++){
             *path = (coord *) malloc(i * sizeof(coord));
 
             int pathFound = 0;
@@ -97,6 +100,7 @@ int moveUnit(game * game, int ownerId, int unitId, coord targetPos, coord ** pat
 
             if(pathFound){
                 size = i;
+                game->players[game->currentPlayer].units[unitId].movements -= size;
                 break;
             }
         }
@@ -107,9 +111,9 @@ int moveUnit(game * game, int ownerId, int unitId, coord targetPos, coord ** pat
 
 
 
-void collect(game * game, int ownerId, int unitId, coord targetPos){
-    int distX = abs(targetPos.x-game->players[ownerId].units[unitId].pos.x);
-    int distY = abs(targetPos.y-game->players[ownerId].units[unitId].pos.y);
+void collect(game * game, int unitId, coord targetPos){
+    int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
+    int distY = abs(targetPos.y-game->players[game->currentPlayer].units[unitId].pos.y);
     int dist = distX+distY;
 
     if(dist == 1){
@@ -118,13 +122,13 @@ void collect(game * game, int ownerId, int unitId, coord targetPos){
 
                 switch(game->map.resources[i].type){    //Updates player resources
                     case GOLD:
-                        game->players[ownerId].gold++;
+                        game->players[game->currentPlayer].gold++;
                         break;
                     case WOOD:
-                        game->players[ownerId].wood++;
+                        game->players[game->currentPlayer].wood++;
                 }
-{}
-                game->players[ownerId].units[unitId].isBusy = 1;
+
+                game->players[game->currentPlayer].units[unitId].isBusy = 1;
                 break;
             }
         }
@@ -133,66 +137,147 @@ void collect(game * game, int ownerId, int unitId, coord targetPos){
 
 
 
-void attack(game * game, int ownerId, int unitId, coord targetPos){
-    int distX = abs(targetPos.x-game->players[ownerId].units[unitId].pos.x);
-    int distY = abs(targetPos.y-game->players[ownerId].units[unitId].pos.y);
+void attack(game * game, int unitId, coord targetPos){
+    int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
+    int distY = abs(targetPos.y-game->players[game->currentPlayer].units[unitId].pos.y);
     int dist = distX+distY;
 
     if(dist == 1){
+
+        int targetFound = 0; //Will stop research after target has been found
+
+        //Cycles players
         for(int i=0; i<game->nPlayers; i++){
-            if(i != ownerId){
+            if(i != game->currentPlayer){
 
-                for(int j=0; j<game->players[i].nUnits; j++){   //Cycles units
+                 //Cycles units
+                for(int j=0; j<game->players[i].nUnits; j++){
+
                     if(targetPos.x == game->players[i].units[j].pos.x && targetPos.y == game->players[i].units[j].pos.y){
+                        targetFound = 1;
+                        game->players[game->currentPlayer].units[unitId].isBusy = 1;
 
-                        game->players[i].units[j].life -= game->players[i].units[j].attack;
+                        game->players[i].units[j].life -= game->players[game->currentPlayer].units[unitId].attack;
 
-                        if(game->players[i].units[j].life <= 0){    //Death of unit
+                        //Death of unit
+                        if(game->players[i].units[j].life <= 0){
+                            //Putting dead unit at end of array
+                            unit bufferUnit = game->players[i].units[j];
+                            game->players[i].units[j] = game->players[i].units[game->players[i].nUnits-1];
+                            game->players[i].units[game->players[i].nUnits-1] = bufferUnit;
+
                             game->players[i].nUnits--;
-                            unit * newUnits;  //Manual realloc of array
-                            newUnits = (unit*) malloc (game->players[i].nUnits * sizeof(unit));
-
-                            int id = 0; //We need a separate counter since it must not be incremented for the dead unit
-                            for(int k=0; k<game->players[i].nUnits; k++){
-
-                                if(k != unitId){
-                                    newUnits[id].type = game->players[i].units[k].type;
-                                    newUnits[id].owner = game->players[i].units[k].owner;
-
-                                    newUnits[id].pos.x = game->players[i].units[k].pos.x;
-                                    newUnits[id].pos.y = game->players[i].units[k].pos.y;
-
-                                    newUnits[id].life = game->players[i].units[k].life;
-                                    newUnits[id].maxLife = game->players[i].units[k].maxLife;
-
-                                    newUnits[id].movements = game->players[i].units[k].movements;
-                                    newUnits[id].maxMovements = game->players[i].units[k].maxMovements;
-
-                                    newUnits[id].attack = game->players[i].units[k].attack;
-                                    newUnits[id].isBusy = game->players[i].units[k].isBusy;
-
-                                    id++;
-                                }
-
-                                free(game->players[i].units);
-                                game->players[i].units = newUnits;
-                            }
+                            game->players[i].units = (unit*) realloc (game->players[i].units, game->players[i].nUnits * sizeof(unit));
                         }
                         break;
                     }
                 }
 
+                if(targetFound)
+                    break;
+
+
+                //Cycles buildings
                 for(int j=0; j<game->players[i].nBuildings; j++){
+
                     if(targetPos.x == game->players[i].buildings[j].pos.x && targetPos.y == game->players[i].buildings[j].pos.y){
+                        targetFound = 1;
+                        game->players[game->currentPlayer].units[unitId].isBusy = 1;
 
-                        game->players[i].buildings[j].life -= game->players[i].units[j].attack;
+                        game->players[i].buildings[j].life -= game->players[game->currentPlayer].units[unitId].attack;
 
-                        if(game->players[i].buildings[j].life <= 0){
-                            //WIP
+                        //Death of building (not city)
+                        if(game->players[i].buildings[j].life <= 0 && game->players[i].buildings[j].type != CITY){                              game->players[i].nBuildings--;
+                              building * newBuildings;    //Reallocating buildings
+                              newBuildings = (building*) malloc(game->players[i].nBuildings * sizeof(building));
+
+                              int id = 0; //Idem units
+                              for(int k=0; k<game->players[i].nBuildings; k++){
+
+                                  if(k != j){
+                                      newBuildings[id] = game->players[i].buildings[k];
+                                      id++;
+                                  }
+                              }
+
+                                  free(game->players[i].buildings);
+                                  game->players[i].buildings = newBuildings;
+                        }
+
+
+                        //Death of city (player looses)
+                        //Player conserved, units/buildings are freed
+                        else if(game->players[i].buildings[j].life <= 0){
+                            free(game->players[i].buildings);
+                            free(game->players[i].units);
+
+                            game->players[i].nUnits = 0;
+                            game->players[i].nBuildings = 0;
+
+                            break;
                         }
                     }
-                }
-            }
-        }
+
+                    if(targetFound){
+                        break;
+                    }//1
+                }//1   1
+            }//1   2   1
+        }//1   3   3   1
+    }//1   4   6   4   1
+}//1   5   10  10  5   1
+// :p
+
+
+//TODO Substract resources
+void createPeasant(game * game, coord pos, int cityId){
+    int distX = abs(game->players[game->currentPlayer].buildings[cityId].pos.x - pos.x);
+    int distY = abs(game->players[game->currentPlayer].buildings[cityId].pos.y - pos.y);
+    int dist = distX + distY;
+
+    if(dist == 1 && !checkMap(*game, pos) && game->players[game->currentPlayer].gold >= 2){
+        game->players[game->currentPlayer].nUnits++;
+        game->players[game->currentPlayer].units = (unit*) realloc(game->players[game->currentPlayer].units, game->players[game->currentPlayer].nUnits * sizeof(unit));
+
+        initPeasant(&game->players[game->currentPlayer].units[game->players[game->currentPlayer].nUnits-1], game->currentPlayer, pos.x, pos.y);
+        game->players[game->currentPlayer].buildings[cityId].isBusy = 1;
+
+        game->players[game->currentPlayer].gold -= 2;   //Peasant Cost
+    }
+}
+
+
+
+void createSoldier(game * game, coord pos, int barrackId){
+    int distX = abs(game->players[game->currentPlayer].buildings[barrackId].pos.x - pos.x);
+    int distY = abs(game->players[game->currentPlayer].buildings[barrackId].pos.y - pos.y);
+    int dist = distX + distY;
+
+    if(dist == 1 && !checkMap(*game, pos) && game->players[game->currentPlayer].gold >= 3){
+        game->players[game->currentPlayer].nUnits++;
+        game->players[game->currentPlayer].units = (unit*) realloc(game->players[game->currentPlayer].units, game->players[game->currentPlayer].nUnits * sizeof(unit));
+
+        initSoldier(&game->players[game->currentPlayer].units[game->players[game->currentPlayer].nUnits-1], game->currentPlayer, pos.x, pos.y);
+        game->players[game->currentPlayer].buildings[barrackId].isBusy = 1;
+
+        game->players[game->currentPlayer].gold -= 3;   //Soldier Cost
+    }
+}
+
+
+
+void createBarrack(game * game, coord pos, int peasantId){
+    int distX = abs(game->players[game->currentPlayer].units[peasantId].pos.x - pos.x);
+    int distY = abs(game->players[game->currentPlayer].units[peasantId].pos.y - pos.y);
+    int dist = distX + distY;
+
+
+    if(dist == 1 && !checkMap(*game, pos) && game->players[game->currentPlayer].wood >= 5){
+        game->players[game->currentPlayer].nBuildings++;
+        game->players[game->currentPlayer].buildings = (building*) realloc(game->players[game->currentPlayer].buildings, game->players[game->currentPlayer].nBuildings * sizeof(building));
+        initBarrack(&game->players[game->currentPlayer].buildings[game->players[game->currentPlayer].nBuildings-1], game->currentPlayer, pos.x, pos.y);
+        game->players[game->currentPlayer].units[peasantId].isBusy = 1;
+
+        game->players[game->currentPlayer].wood -= 5;   //Barrack Cost
     }
 }

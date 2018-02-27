@@ -3,6 +3,8 @@
 #include <time.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
+
 #include "../include/display/menu.h"
 #include "../include/display/display.h"
 
@@ -69,4 +71,118 @@ void change_couleur(SDL_Renderer* RENDERER)
 	y=rand()%256;
 	z=rand()%256;
 	SDL_SetRenderDrawColor(RENDERER,x,y,z,255);
+}
+
+
+
+//Menu HUD (Quit game, load & save)
+int inGameMenu(SDL_Renderer * renderer){
+    SDL_Event event;
+    int quit = 0;
+    int exitGame = 0; //Return value
+
+    //Font size and surface height are different, but we need to locate the actual text for hitboxes
+    float fontFactor = 0.655;
+
+
+    //Background
+	//BUG Seems to be freed incorrectly sometimes (abnormal memory consumption but no crash)
+    SDL_Rect srcRect;
+    setRectangle(&srcRect, 0, 0, 3840, 2160); //Dim of background
+
+    SDL_Rect destRect;
+    setRectangle(&destRect, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    SDL_Surface * background = IMG_Load("resources/menu.png");
+    SDL_Texture * backgroundTexture = SDL_CreateTextureFromSurface(renderer, background);
+    SDL_RenderCopy(renderer, backgroundTexture, &srcRect, &destRect);
+
+    SDL_DestroyTexture(backgroundTexture);
+
+    //Title
+    TTF_Font * font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/8);
+    SDL_Color color = {255, 237, 43};
+
+    SDL_Surface * title= TTF_RenderText_Blended(font, "freefreeciv", color);
+    SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, title);
+
+    setRectangle(&srcRect, 0, title->h - (title->h*fontFactor+1), title->w, title->h * fontFactor);
+    setRectangle(&destRect, SCREEN_WIDTH/2 - title->w/2, 3*SCREEN_HEIGHT/64, title->w, title->h * fontFactor);
+    SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+    SDL_DestroyTexture(textTexture);
+    TTF_CloseFont(font);
+
+
+    //Save
+    font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/16);
+
+    SDL_Surface * save = TTF_RenderText_Blended(font, "save", color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, save);
+
+    setRectangle(&srcRect, 0, save->h - (save->h*fontFactor+1), save->w, save->h * fontFactor + 1);
+    setRectangle(&destRect, SCREEN_WIDTH/2 - save->w/2, 3*SCREEN_HEIGHT/8-((save->h*fontFactor+1)/2), save->w, save->h * fontFactor + 1);
+    SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+    SDL_DestroyTexture(textTexture);
+
+
+    //Load
+    SDL_Surface * load = TTF_RenderText_Blended(font, "load", color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, load);
+
+    setRectangle(&srcRect, 0, load->h - (load->h*fontFactor+1), load->w, load->h * fontFactor + 1);
+    setRectangle(&destRect, SCREEN_WIDTH/2 - load->w/2, 2*SCREEN_HEIGHT/4-((load->h*fontFactor+1)/2), load->w, load->h * fontFactor + 1);
+    SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_DestroyTexture(textTexture);
+
+
+    //Quit game
+    SDL_Surface * quitGame = TTF_RenderText_Blended(font, "quit", color);
+    textTexture = SDL_CreateTextureFromSurface(renderer, quitGame);
+
+    setRectangle(&srcRect, 0, quitGame->h - (quitGame->h*fontFactor+1), quitGame->w, quitGame->h * fontFactor + 1);
+    setRectangle(&destRect, SCREEN_WIDTH/2 - quitGame->w/2, 5*SCREEN_HEIGHT/8-((quitGame->h*fontFactor+1)/2), quitGame->w, quitGame->h * fontFactor + 1);
+    SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+	SDL_DestroyTexture(textTexture);
+
+    SDL_RenderPresent(renderer);
+	TTF_CloseFont(font);
+
+    //Loop (display doesn't change anymore)
+    while(!quit){
+        SDL_Delay(REFRESH_PERIOD);
+
+        while(SDL_PollEvent(&event)){
+            //TODO Add all events
+            //Quit menu (cross)
+            if(event.type == SDL_MOUSEBUTTONDOWN
+        	&& event.button.button == SDL_BUTTON_LEFT
+        	&& event.button.x >= SCREEN_WIDTH - TILE_SIZE && event.button.y <= TILE_SIZE){
+                quit = 1;
+            }
+            else if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
+                quit = 1;
+            }
+
+			//Quit game ("Quit" button)
+			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= SCREEN_WIDTH/2 - quitGame->w/2 && event.button.x <= SCREEN_WIDTH/2 + quitGame->w/2
+			&& event.button.y >= 5*SCREEN_HEIGHT/8-((quitGame->h*fontFactor+1)/2) && event.button.y <= 5*SCREEN_HEIGHT/8-((quitGame->h*fontFactor+1)/2)+quitGame->h * fontFactor + 1){
+				quit = 1;
+				exitGame = 1;
+			}
+        }
+    }
+
+	//Needed for hitboxes so freed at end of function
+	SDL_FreeSurface(background);
+	SDL_FreeSurface(title);
+	SDL_FreeSurface(save);
+	SDL_FreeSurface(load);
+	SDL_FreeSurface(quitGame);
+
+    return exitGame;
 }

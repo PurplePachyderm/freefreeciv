@@ -5,7 +5,7 @@
 #include "../include/display/tokens_display.h"
 
 
-void dispUnits(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera, player player){
+void dispUnits(SDL_Renderer * renderer, SDL_Texture * texture, view camera, player player){
     coord sprite;
 
     int x;
@@ -70,14 +70,14 @@ void dispUnits(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprit
         width = (int) TILE_SIZE*camera.zoom + 1;	//The +1 avoids 1 pixel gap between tiles on particular zoom values
 
         if( (x+width>0 && y+width>0) || (x<SCREEN_WIDTH && y<SCREEN_HEIGHT) ){	//if statement avoids blitting sprites out of the screen
-            blitSprite(renderer, sprites, texture, sprite.x, sprite.y, x, y, width);
+            blitSprite(renderer, texture, sprite.x, sprite.y, x, y, width);
         }
     }
 }
 
 
 
-void dispBuildings(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera, player player){
+void dispBuildings(SDL_Renderer * renderer, SDL_Texture * texture, view camera, player player){
     coord sprite;
 
     int x;
@@ -142,21 +142,21 @@ void dispBuildings(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * s
         width = (int) TILE_SIZE*camera.zoom + 1;	//The +1 avoids 1 pixel gap between tiles on particular zoom values
 
         if( (x+width>0 && y+width>0) || (x<SCREEN_WIDTH && y<SCREEN_HEIGHT) ){	//if statement avoids blitting sprites out of the screen
-            blitSprite(renderer, sprites, texture, sprite.x, sprite.y, x, y, width);
+            blitSprite(renderer, texture, sprite.x, sprite.y, x, y, width);
         }
     }
 }
 
 
 
-void dispPlayer(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera, player player){
-    dispUnits(window, renderer, sprites, texture, camera, player);
-    dispBuildings(window, renderer, sprites, texture, camera, player);
+void dispPlayer(SDL_Renderer * renderer, SDL_Texture * texture, view camera, player player){
+    dispUnits(renderer, texture, camera, player);
+    dispBuildings(renderer, texture, camera, player);
 }
 
 
 
-void dispResources(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera, map map){
+void dispResources(SDL_Renderer * renderer, SDL_Texture * texture, view camera, map map){
     coord sprite;
 
     int x;
@@ -180,18 +180,18 @@ void dispResources(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * s
         width = (int) TILE_SIZE*camera.zoom + 1;	//The +1 avoids 1 pixel gap between tiles on particular zoom values
 
         if( (x+width>0 && y+width>0) || (x<SCREEN_WIDTH && y<SCREEN_HEIGHT) ){	//if statement avoids blitting sprites out of the screen
-            blitSprite(renderer, sprites, texture, sprite.x, sprite.y, x, y, width);
+            blitSprite(renderer, texture, sprite.x, sprite.y, x, y, width);
         }
     }
 }
 
 
 
-void dispTokens(SDL_Window * window, SDL_Renderer * renderer, SDL_Surface * sprites, SDL_Texture * texture, view camera, game game){
-    dispResources(window, renderer, sprites, texture, camera, game.map);
+void dispTokens(SDL_Renderer * renderer, SDL_Texture * texture, view camera, game game){
+    dispResources(renderer, texture, camera, game.map);
 
     for(int i=0; i<game.nPlayers; i++){
-        dispBuildings(window, renderer, sprites, texture, camera, game.players[i]);
-        dispUnits(window, renderer, sprites, texture, camera, game.players[i]); 
+        dispBuildings(renderer, texture, camera, game.players[i]);
+        dispUnits(renderer, texture, camera, game.players[i]);
     }
 }

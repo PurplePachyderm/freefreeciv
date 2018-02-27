@@ -14,7 +14,7 @@
     //Player color/ID
 #define RED 0
 #define BLUE 1
-#define  GREEN 2
+#define GREEN 2
 #define YELLOW 3
 
 
@@ -24,6 +24,8 @@
 
     //Map (TODO more sizes?)
 #define MAP_SIZE 15
+
+#define TURN_TIME 90 //sec
 
 
 
@@ -94,3 +96,13 @@ typedef struct{
 
     map map;
 }game;
+
+
+    //Prototypes
+int checkOwnBuilding(game, coord pos);
+int checkOwnUnit(game, coord pos);
+
+int checkForeignBuilding(game, coord pos, int * ownerId);
+int checkForeignUnit(game, coord pos, int * ownerId);
+
+void busyReset(game * game);
