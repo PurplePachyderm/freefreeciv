@@ -14,7 +14,7 @@
     //Player color/ID
 #define RED 0
 #define BLUE 1
-#define  GREEN 2
+#define GREEN 2
 #define YELLOW 3
 
 
