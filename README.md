@@ -1,6 +1,8 @@
 # Freefreeciv
 [WIP] SDL turn-based strategy game made for a school project.
 
+Working brach on Arveto.
+
 Teasing: Companion app incoming...
 
 Required libraries (for now): [SDL2](https://www.libsdl.org/),
