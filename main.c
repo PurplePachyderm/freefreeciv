@@ -10,6 +10,7 @@
 #include "include/game/game.h"
 #include "include/game/structures_init.h"
 #include "include/game/save_system.h"
+#include "include/game/map.h"
 
 
 //Temporary main, for testing purpose only
@@ -38,7 +39,12 @@ int main(int argc, char** argv){
 
 		//Game init
 	game game;
-	loadSave("test", &game);
+	//loadSave("test", &game);
+	int nPlayers = 2;
+	int * isAIControlled = (int*) malloc (2*sizeof(int));
+	isAIControlled[0] = 0;
+	isAIControlled[0] = 0;
+	genGame(&game, nPlayers, isAIControlled);
 
 
 		//Main menu (game hud for now)
