@@ -193,10 +193,12 @@ void genGame(game * game, int nPlayers, int * isAIControlled){
 		game->players[i].nBuildings = 1;
 		game->players[i].buildings = (building*) malloc(sizeof(building));
 		initCity(&game->players[i].buildings[0], i, 0, 0);	//Coords to 0,0 before being modified in genSpawns
+		game->players[i].buildings[0].isBusy = 0;	//Tokens can play on first turn
 
 		game->players[i].nUnits = 1;
 		game->players[i].units = (unit*) malloc(sizeof(unit));
 		initPeasant(&game->players[i].units[0], i, 0, 0);
+		game->players[i].units[0].isBusy = 0;	//Tokens can play on first turn
 	}
 
 	game->map.size = MAP_SIZE;
