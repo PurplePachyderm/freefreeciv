@@ -1,6 +1,6 @@
 #Variables
 DISPLAY_FILES = display.o map_display.o tokens_display.o menu.o hud.o hud_display.o
-GAME_FILES = structures_init.o save_system.o units_actions.o game.o map.o
+GAME_FILES = structures_init.o save_system.o units_actions.o game.o map.o ai.o
 LIBS = -Llib -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -ljson-c
 
 
@@ -51,6 +51,9 @@ game.o:
 
 map.o:
 	gcc -c game/map.c -Wall
+
+ai.o:
+	gcc -c game/ai.c -Wall
 
 
 

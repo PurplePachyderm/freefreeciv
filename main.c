@@ -43,7 +43,7 @@ int main(int argc, char** argv){
 	int nPlayers = 2;
 	int * isAIControlled = (int*) malloc (2*sizeof(int));
 	isAIControlled[0] = 0;
-	isAIControlled[0] = 0;
+	isAIControlled[1] = 0;
 	genGame(&game, nPlayers, isAIControlled);
 
 

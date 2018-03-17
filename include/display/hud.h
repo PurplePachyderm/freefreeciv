@@ -6,6 +6,9 @@
 int countdownUpdate(int * countdown, int * countdownSec, int quit, int * newEvent, game * game);
 
 void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game);
+int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera);
+void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera);
+
 int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int peasantId);   //This is way too long
 int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int soldierId);
 int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int soldierId);

@@ -1,6 +1,6 @@
 #include "game.h"
 
-#define MIN_DIST 5
+#define MIN_DIST 7
 #define N_RESOURCES 5   //Number for each type
 
 void genSpawns(game * game);

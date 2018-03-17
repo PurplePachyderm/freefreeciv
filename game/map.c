@@ -151,14 +151,15 @@ void genResources(game * game){
 					break;
 				}
 			}
+		}
 
+		if(restart){
+			break;
+		}
 
-			if(restart){
-				break;
-			}
-
-			else{
-				//Check conflict with other resource
+		else{
+			//Check conflict with other resource
+			for(int i=0; i>game->map.nResources; i++){
 				for(int j=0; j>game->map.nResources; j++){
 					if(i != j){
 						if(game->map.resources[i].pos.x == game->map.resources[j].pos.x &&

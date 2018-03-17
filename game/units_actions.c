@@ -242,7 +242,7 @@ void createPeasant(game * game, coord pos, int cityId){
         initPeasant(&game->players[game->currentPlayer].units[game->players[game->currentPlayer].nUnits-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].buildings[cityId].isBusy = 1;
 
-        game->players[game->currentPlayer].gold -= 2;   //Peasant Cost
+        game->players[game->currentPlayer].gold -= PEASANT_COST;
     }
 }
 
@@ -260,7 +260,7 @@ void createSoldier(game * game, coord pos, int barrackId){
         initSoldier(&game->players[game->currentPlayer].units[game->players[game->currentPlayer].nUnits-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].buildings[barrackId].isBusy = 1;
 
-        game->players[game->currentPlayer].gold -= 3;   //Soldier Cost
+        game->players[game->currentPlayer].gold -= SOLDIER_COST;   //Soldier Cost
     }
 }
 
@@ -278,6 +278,6 @@ void createBarrack(game * game, coord pos, int peasantId){
         initBarrack(&game->players[game->currentPlayer].buildings[game->players[game->currentPlayer].nBuildings-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].units[peasantId].isBusy = 1;
 
-        game->players[game->currentPlayer].wood -= 5;   //Barrack Cost
+        game->players[game->currentPlayer].wood -= BARRACK_COST;
     }
 }

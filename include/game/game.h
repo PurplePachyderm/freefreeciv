@@ -27,6 +27,10 @@
 
 #define TURN_TIME 90 //sec
 
+//Costs
+#define PEASANT_COST 2
+#define SOLDIER_COST 3
+#define BARRACK_COST 5
 
 
         //Structures
