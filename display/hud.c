@@ -1,3 +1,7 @@
+//Published under GNU license by Alix EYOBELE-OBAKA
+//Please do redistibute this software
+//All rights reserved 2018
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
@@ -58,6 +62,10 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
 
 				if(!nextTurn)
 					quit = 1;
+			}
+
+			else{	//AI
+				AIHud(renderer, texture, &game, &camera);
 			}
 		}
 	}
@@ -168,16 +176,22 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view 
 
 //AI Hud (no ingame events)
 void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera){
+	printf("Entering AI turn...\n");
+
 	ai ai;
-	coord * path;
+	coord * path = NULL;
+	initAI(*game, &ai);
 
+	printf("AI initialized...\n");
 
-	basicDisplay(renderer, texture, *game, *camera, 0, 0);
+	while(ai.currentBuilding < game->players[game->currentPlayer].nBuildings){
+		basicDisplay(renderer, texture, *game, *camera, 0, 0);
 
-	int actionAI = routineAI(game, &ai);
-	while(actionAI != END_AI_TURN){
+		int actionAI = routineAI(game, &ai);
+		printf("Determined next AI action (code %d for token (%d,%d))...\n", actionAI, ai.currentUnit, ai.currentBuilding);
 
 		if(actionAI != BUILDING_CREATION && actionAI != PASS_TURN){	//If unit is playing
+			printf("Preparing unit movement to(%d, %d)...\n", ai.movementTarget.x, ai.movementTarget.y);
 			int length = moveUnit(game, ai.currentUnit, ai.actionTarget, &path);
 			if(length){
 				movementAnim(renderer, texture, *camera, game, path, length, ai.currentUnit);
@@ -187,6 +201,7 @@ void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * c
 
 		switch(actionAI){
 			case ATTACK:
+				printf("Preparing to ATTACK\n");
 				attack(game, ai.currentUnit, ai.actionTarget);
 				ai.currentUnit++;
 				//TODO Animation?
@@ -194,6 +209,7 @@ void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * c
 				break;
 
 			case HARVEST:
+				printf("Preparing to HARVEST\n");
 				collect(game, ai.currentUnit, ai.actionTarget);
 				ai.currentUnit++;
 				//TODO Animation?
@@ -201,6 +217,7 @@ void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * c
 				break;
 
 			case UNIT_CREATION:
+				printf("Preparing to UNIT_CREATION\n");
 				switch(game->players[game->currentPlayer].buildings[ai.currentBuilding].type){
 					case CITY:
 						createPeasant(game, ai.actionTarget, ai.currentBuilding);
@@ -215,14 +232,23 @@ void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * c
 				break;
 
 			case BUILDING_CREATION:
+				printf("Preparing to BUILDING_CREATION\n");
 				createBarrack(game, ai.actionTarget, ai.currentUnit);
 				ai.currentUnit++;
 				//TODO Animation?
 				basicDisplay(renderer, texture, *game, *camera, 0, 0);
 				break;
-		}
 
-		actionAI = routineAI(game, &ai);
+			case PASS_TURN:
+				//Avoids infinite loop in case of other exit code
+
+				if(ai.currentUnit < game->players[game->currentPlayer].nUnits){
+					ai.currentUnit++;
+				}
+				else{
+					ai.currentBuilding++;
+				}
+		}
 	}
 }
 
@@ -236,7 +262,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 	int newEvent = 0;
 
 	coord target;
-	coord * path;
+	coord * path = NULL;
 	coord selectedTile;
 	//int tokenId;
 	//int ownerId;
@@ -338,7 +364,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 	coord selectedTile;
 	coord target;
-	coord * path;
+	coord * path = NULL;
 
 	soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
 
