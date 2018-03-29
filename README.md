@@ -3,10 +3,14 @@
 
 Teasing: Companion app incoming...
 
-Required libraries (for now): [SDL2](https://www.libsdl.org/),
- [SDL_image](https://www.libsdl.org/projects/SDL_image/),
- [SDL_ttf](https://www.libsdl.org/projects/SDL_ttf/),
- [json-c](https://github.com/json-c/json-c)
+### Dependencies: 
+
+[SDL2](https://www.libsdl.org/),
+[SDL_image](https://www.libsdl.org/projects/SDL_image/),
+[SDL_ttf](https://www.libsdl.org/projects/SDL_ttf/),
+[json-c](https://github.com/json-c/json-c)
+
+FFC is also including the [easywsclient](https://github.com/dhbaird/easywsclient) library released under MIT license
 
 ### Credits
 #### Sprites
