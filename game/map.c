@@ -9,7 +9,7 @@
 #include "../include/game/structures_init.h"
 
 //XXX Needs testing
-void genSpawns(game * game){
+void genSpawns(struct game * game){
 	srand(time(NULL));
 
 	int distX;
@@ -110,7 +110,7 @@ void genSpawns(game * game){
 
 
 
-void genResources(game * game){
+void genResources(struct game * game){
 	srand(time(NULL));
 
 	game->map.nResources = (N_RESOURCES + game->nPlayers - 2)*2;	//N_RESOURCES is the number for each type
@@ -178,7 +178,7 @@ void genResources(game * game){
 
 
 
-void genGame(game * game, int nPlayers, int * isAIControlled){
+void genGame(struct game * game, int nPlayers, int * isAIControlled){
 	game->players = (player*) malloc(nPlayers*sizeof(player));
 	game->nPlayers = nPlayers;
 	game->currentPlayer = 0;

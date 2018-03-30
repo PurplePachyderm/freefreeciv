@@ -7,7 +7,7 @@
 
 //Déso pas déso ¯\_(ツ)_/¯
 
-void createSave(char * saveName, game game){
+void createSave(char * saveName, struct game game){
 
         //Creation of JSON string
     json_object * jGame = json_object_new_object();
@@ -332,7 +332,7 @@ void createSave(char * saveName, game game){
 
 
 
-void loadSave(char * saveName, game * game){
+void loadSave(char * saveName, struct game * game){
         //Access to the JSON file
     char *  path = (char*) malloc(100 * sizeof(char));
     path[0] = '\0';

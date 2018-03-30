@@ -36,6 +36,6 @@ typedef struct{
 void setRectangle(SDL_Rect * rect, int x, int y, int w, int h);
 void blitSprite(SDL_Renderer * renderer, SDL_Texture * texture, int xSprite, int ySprite, int x, int y, int width);
 
-int events(SDL_Event event, view *camera, game game, coord * selectedTile);
+int events(SDL_Event event, view *camera, struct game game, coord * selectedTile);
 
-void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view camera, game * game, coord * path, int length, int tokenId);
+void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view camera, struct game * game, coord * path, int length, int tokenId);

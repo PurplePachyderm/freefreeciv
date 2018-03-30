@@ -15,7 +15,7 @@
 #include "../include/coord.h"
 
 //Basic functions (reused in several Huds)
-void basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int isMainHud){
+void basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game game, view camera, int countdown, int isMainHud){
 	//Warning: Does not include RenderPresent
 	//Renders map, player indocator, countdown,
 
@@ -71,7 +71,7 @@ void basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, vie
 	//Finish turn/Cancel
 
 	if(isMainHud){
-		SDL_Surface * arrowSurf = arrowSurf = IMG_Load("resources/arrow.png");
+		SDL_Surface * arrowSurf = IMG_Load("resources/arrow.png");
 
 		SDL_Texture * arrow = SDL_CreateTextureFromSurface(renderer, arrowSurf);
 		SDL_FreeSurface(arrowSurf);
@@ -129,7 +129,7 @@ void basicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, vie
 
 
 //Huds
-void mainDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown){
+void mainDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game game, view camera, int countdown){
 	basicDisplay(renderer, texture, game, camera, countdown, 1);
 
 	SDL_RenderPresent(renderer);
@@ -137,7 +137,7 @@ void mainDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view
 
 
 
-void peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int peasantId){
+void peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game game, view camera, int countdown, int peasantId){
 	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	//Highlighter
@@ -236,7 +236,7 @@ void peasantDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, v
 
 
 
-void soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int soldierId){
+void soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game game, view camera, int countdown, int soldierId){
 	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	//Highlighter
@@ -322,7 +322,7 @@ void soldierDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, v
 
 
 
-void buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int buildingId){
+void buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game game, view camera, int countdown, int buildingId){
 	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	//Highlighter
@@ -378,7 +378,7 @@ void buildingDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, 
 
 
 
-void targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int isMovement, coord pos){
+void targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game game, view camera, int countdown, int isMovement, coord pos){
 	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	SDL_Rect srcRect;
@@ -424,7 +424,7 @@ void targetDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, vi
 
 
 
-void foreignDisplay(SDL_Renderer * renderer, SDL_Texture * texture, game game, view camera, int countdown, int ownerId, int tokenId, int isUnit){
+void foreignDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game game, view camera, int countdown, int ownerId, int tokenId, int isUnit){
 	basicDisplay(renderer, texture, game, camera, countdown, 0);
 
 	coord pos;

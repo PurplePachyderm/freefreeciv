@@ -156,7 +156,7 @@ void dispPlayer(SDL_Renderer * renderer, SDL_Texture * texture, view camera, pla
 
 
 
-void dispResources(SDL_Renderer * renderer, SDL_Texture * texture, view camera, map map){
+void dispResources(SDL_Renderer * renderer, SDL_Texture * texture, view camera, struct map map){
     coord sprite;
 
     int x;
@@ -187,7 +187,7 @@ void dispResources(SDL_Renderer * renderer, SDL_Texture * texture, view camera, 
 
 
 
-void dispTokens(SDL_Renderer * renderer, SDL_Texture * texture, view camera, game game){
+void dispTokens(SDL_Renderer * renderer, SDL_Texture * texture, view camera, struct game game){
     dispResources(renderer, texture, camera, game.map);
 
     for(int i=0; i<game.nPlayers; i++){

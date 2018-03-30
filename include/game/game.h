@@ -84,29 +84,29 @@ typedef struct{
 }resource;
 
 
-typedef struct{
+struct map{
     int size;
 
     resource * resources;   //Array
     int nResources;
-}map;
+};
 
 
     //Game (contains every info about the current game)
-typedef struct{
+struct game{
     player * players;   //Array
     int nPlayers;
     int currentPlayer;
 
-    map map;
-}game;
+    struct map map;
+};
 
 
     //Prototypes
-int checkOwnBuilding(game, coord pos);
-int checkOwnUnit(game, coord pos);
+int checkOwnBuilding(struct game game, coord pos);
+int checkOwnUnit(struct game game, coord pos);
 
-int checkForeignBuilding(game, coord pos, int * ownerId);
-int checkForeignUnit(game, coord pos, int * ownerId);
+int checkForeignBuilding(struct game game, coord pos, int * ownerId);
+int checkForeignUnit(struct game game, coord pos, int * ownerId);
 
-void busyReset(game * game);
+void busyReset(struct game * game);

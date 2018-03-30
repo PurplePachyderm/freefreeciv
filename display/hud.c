@@ -20,7 +20,7 @@
 
 
 //Basic functions (reused in several Huds)
-int countdownUpdate(int * countdown, int * countdownSec, int quit, int * newEvent, game * game){
+int countdownUpdate(int * countdown, int * countdownSec, int quit, int * newEvent, struct game * game){
 	*countdown -= REFRESH_PERIOD;
 	if(*countdown/1000 < *countdownSec){	//Refresh display
 		(*countdownSec)--;	// (╯°□°）╯︵ ┻━┻ Don't forget the parenthesis
@@ -40,7 +40,7 @@ int countdownUpdate(int * countdown, int * countdownSec, int quit, int * newEven
 
 
 //Main HUD (Main game function, sets everything to default state)
-void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
+void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
 	int quit = 0;
 	view camera;
     camera.offset.x = (SCREEN_WIDTH - (MAP_SIZE+2)*TILE_SIZE) / 2;	//Centers map
@@ -74,7 +74,7 @@ void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, game game){
 
 
 //Player Hud
-int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera){
+int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
 	SDL_Event event;
 	int quit = 0;
 	int newEvent = 0;
@@ -175,7 +175,7 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view 
 
 
 //AI Hud (no ingame events)
-void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera){
+void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
 	printf("Entering AI turn...\n");
 
 	ai ai;
@@ -255,7 +255,7 @@ void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * c
 
 
 //Peasant Hud
-int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
+int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -356,7 +356,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 
 //Soldier Hud
-int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int soldierId){
+int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int soldierId){
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -433,7 +433,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view
 
 
 //Building Hud
-int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int buildingId){
+int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int buildingId){
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -504,7 +504,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, vie
 
 
 //Target selection HUD
-int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int isMovement, coord pos, coord * target){
+int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int isMovement, coord pos, coord * target){
 	//General selection Hud used to retrieve clicked tile
 
 	SDL_Event event;
@@ -560,7 +560,7 @@ int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view 
 
 
 //Foreign Token Hud
-int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, game * game, view * camera, int * countdown, int * countdownSec, int ownerId, int tokenId, int isUnit){
+int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int ownerId, int tokenId, int isUnit){
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
 	int newEvent = 0;

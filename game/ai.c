@@ -6,7 +6,7 @@
 #include "../include/coord.h"
 
 
-void initAI(game game, ai * ai){
+void initAI(struct game game, ai * ai){
     if(game.players[game.currentPlayer].nBuildings > 1)
        ai->hasBarrack = game.players[game.currentPlayer].nBuildings-1;  //Number of barrack
     else
@@ -29,7 +29,7 @@ void initAI(game game, ai * ai){
 
 
 
-int routineAI(game * game, ai * ai){
+int routineAI(struct game * game, ai * ai){
     //Determines the action for one unit/building
     //Returns the action Id (it will be executed in AIHud)
 
@@ -182,7 +182,7 @@ int routineAI(game * game, ai * ai){
 
 
 
-coord pathfindingAI(game * game, int unitId, coord targetPos, int tileIsOccupied){
+coord pathfindingAI(struct game * game, int unitId, coord targetPos, int tileIsOccupied){
     //Allows dynamic multi-turn pathfinding in a 2D environment using a particular case of Dijsktra's algorithm ;)
     //Returns the position the unit will have to move to for the current turn
 
@@ -214,7 +214,7 @@ coord pathfindingAI(game * game, int unitId, coord targetPos, int tileIsOccupied
 
 
 
-int estimateTrueDist(game * game, int unitId, coord targetPos){
+int estimateTrueDist(struct game * game, int unitId, coord targetPos){
     //Returns the distance that a unit actually has to travel to reach its target
     //(using pathfinding)
 
@@ -232,7 +232,7 @@ int estimateTrueDist(game * game, int unitId, coord targetPos){
 
 
 
-int findResource(game * game, int unitId, int resourceType){
+int findResource(struct game * game, int unitId, int resourceType){
     //Looks for closest resource
 
     int bestResource;
@@ -255,7 +255,7 @@ int findResource(game * game, int unitId, int resourceType){
 
 
 
-int enemyDistToCity(game game, coord * enemyPos){
+int enemyDistToCity(struct game game, coord * enemyPos){
     //Scans all enemy units and returns the lowest distance to own city
     //Will allow us to know if a unit has to attack and who
 
@@ -288,7 +288,7 @@ int enemyDistToCity(game game, coord * enemyPos){
 
 
 
-int enemyDistToUnit(game game, ai ai, coord * enemyPos){
+int enemyDistToUnit(struct game game, ai ai, coord * enemyPos){
     //Scans all enemy units and returns the lowest distance to own city
     //Will allow us to know if a unit has to attack and who
 
@@ -320,7 +320,7 @@ int enemyDistToUnit(game game, ai ai, coord * enemyPos){
 }
 
 
-coord getTokenCreationPos(game game, coord sourcePos){
+coord getTokenCreationPos(struct game game, coord sourcePos){
     coord testPos;
     coord createPos;
     createPos.x = 0;
@@ -359,7 +359,7 @@ coord getTokenCreationPos(game game, coord sourcePos){
 
 
 
-int getNPeasants(game game){
+int getNPeasants(struct game game){
     int nPeasants = 0;
 
     for(int i=0; i<game.players[game.currentPlayer].nUnits; i++){
@@ -373,7 +373,7 @@ int getNPeasants(game game){
 
 
 
-int getNSoldiers(game game){
+int getNSoldiers(struct game game){
     int nSoldiers = 0;
 
     for(int i=0; i<game.players[game.currentPlayer].nUnits; i++){

@@ -11,6 +11,8 @@
 #include "include/game/structures_init.h"
 #include "include/game/save_system.h"
 #include "include/game/map.h"
+#include "include/multiplayer/game_init.hpp"
+#include "include/multiplayer/json.h"
 
 
 //Temporary main, for testing purpose only
@@ -38,7 +40,7 @@ int main(int argc, char** argv){
 	TTF_Init();
 
 		//Game init
-	game game;
+	struct game game;
 	//loadSave("test", &game);
 	int nPlayers = 2;
 	int * isAIControlled = (int*) malloc (2*sizeof(int));
@@ -50,6 +52,8 @@ int main(int argc, char** argv){
 		//Main menu (game hud for now)
 	mainHud(renderer, texture, game);
 
+	//wsConnectTest(jString);
+	//wsConnect(renderer, texture);
 
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);

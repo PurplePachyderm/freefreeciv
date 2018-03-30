@@ -33,17 +33,17 @@ typedef struct{
 }ai;
 
 //Prototypes
-void initAI(game game, ai * ai);
-int routineAI(game * game, ai * ai);
+void initAI(struct game game, ai * ai);
+int routineAI(struct game * game, ai * ai);
 
-coord pathfindingAI(game * game, int unitId, coord targetPos, int tileIsOccupied);
-int estimateTrueDist(game * game, int unitId, coord targetPos);
+coord pathfindingAI(struct game * game, int unitId, coord targetPos, int tileIsOccupied);
+int estimateTrueDist(struct game * game, int unitId, coord targetPos);
 
-int findResource(game * game, int unitId, int resourceType);
-int enemyDistToCity(game game, coord * enemyPos);
-int enemyDistToUnit(game game, ai ai, coord * enemyPos);
+int findResource(struct game * game, int unitId, int resourceType);
+int enemyDistToCity(struct game game, coord * enemyPos);
+int enemyDistToUnit(struct game game, ai ai, coord * enemyPos);
 
-coord getTokenCreationPos(game game, coord sourcePos);
+coord getTokenCreationPos(struct game game, coord sourcePos);
 
-int getNPeasants(game game);
-int getNSoldiers(game game);
+int getNPeasants(struct game game);
+int getNSoldiers(struct game game);
