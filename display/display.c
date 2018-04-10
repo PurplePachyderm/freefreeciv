@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include "../include/game/game.h"
 #include "../include/display/display.h"
+#include "../include/display/hud.h"
 #include "../include/display/map_display.h"
 #include "../include/display/tokens_display.h"
 
@@ -106,13 +107,40 @@ int events(SDL_Event event, view * camera, struct game game, coord * selectedTil
 
 
 
-void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view camera, struct game * game, coord * path, int length, int tokenId){
+void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view * camera, struct game * game, coord * path, int length, int tokenId){
+	SDL_Event event;
+	int countdown;
+	coord selectedTile;	//Only used to call events management
+
+
+
 	for(int i=0; i<length; i++){
 		game->players[game->currentPlayer].units[tokenId].pos = path[i];
+		countdown = 0;
+		int newEvent;
 
-		dispMap(renderer, texture, camera);
-		dispTokens(renderer, texture, camera, *game);
+		dispMap(renderer, texture, *camera);
+		dispTokens(renderer, texture, *camera, *game);
 		SDL_RenderPresent(renderer);
+
+		while(countdown < 1000){
+			SDL_Delay(REFRESH_PERIOD);
+			countdown += REFRESH_PERIOD;
+			while(SDL_PollEvent(&event)){
+				newEvent = events(event, camera, *game, &selectedTile);
+			}
+
+			if(newEvent){
+				dispMap(renderer, texture, *camera);
+				dispTokens(renderer, texture, *camera, *game);
+				SDL_RenderPresent(renderer);
+			}
+		}
+
+
+
+
+
 
 		SDL_Delay(500);
 	}

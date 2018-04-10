@@ -120,12 +120,14 @@ int checkForeignUnit(struct game game, coord pos, int * ownerId){
 
 void busyReset(struct game * game){
     //Sets all isBusy to 0 (to be called at beginning of turn) & resets movements
-    for(int i=0; i<game->players[game->currentPlayer].nUnits; i++){
-        game->players[game->currentPlayer].units[i].isBusy = 0;
-        game->players[game->currentPlayer].units[i].movements = game->players[game->currentPlayer].units[i].maxMovements;
-    }
+    for(int i=0; i<game->nPlayers; i++){
+        for(int j=0; j<game->players[i].nUnits; j++){
+            game->players[i].units[j].isBusy = 0;
+            game->players[i].units[j].movements = game->players[i].units[j].maxMovements;
+        }
 
-    for(int i=0; i<game->players[game->currentPlayer].nBuildings; i++){
-        game->players[game->currentPlayer].buildings[i].isBusy = 0;
+        for(int j=0; j<game->players[i].nBuildings; j++){
+            game->players[i].buildings[j].isBusy = 0;
+        }
     }
 }

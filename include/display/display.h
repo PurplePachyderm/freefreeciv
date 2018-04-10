@@ -38,4 +38,4 @@ void blitSprite(SDL_Renderer * renderer, SDL_Texture * texture, int xSprite, int
 
 int events(SDL_Event event, view *camera, struct game game, coord * selectedTile);
 
-void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view camera, struct game * game, coord * path, int length, int tokenId);
+void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view * camera, struct game * game, coord * path, int length, int tokenId);

@@ -30,6 +30,10 @@ typedef struct{
     //Required data for current action
     coord movementTarget;
     coord actionTarget;
+
+    //Number of tokens before playing
+    int nBuildings;
+    int nUnits;
 }ai;
 
 //Prototypes

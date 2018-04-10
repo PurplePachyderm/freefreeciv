@@ -25,6 +25,9 @@ void initAI(struct game game, ai * ai){
     ai->movementTarget.y = 0;
     ai->actionTarget.x = 0;
     ai->actionTarget.y = 0;
+
+    ai->nBuildings = game.players[game.currentPlayer].nBuildings;
+    ai->nUnits = game.players[game.currentPlayer].nUnits;
 }
 
 
@@ -37,7 +40,7 @@ int routineAI(struct game * game, ai * ai){
     coord enemyPos;
 
     //Plays with units first
-    if(ai->currentUnit < game->players[game->currentPlayer].nUnits){
+    if(ai->currentUnit < ai->nUnits){
 
         switch(game->players[game->currentPlayer].units[ai->currentUnit].type){
             case PEASANT:
@@ -146,7 +149,8 @@ int routineAI(struct game * game, ai * ai){
     }
 
 
-    else if(ai->currentBuilding < game->players[game->currentPlayer].nBuildings){   //Buildings
+    else if(ai->currentBuilding < ai->nBuildings){   //Buildings
+
         switch(game->players[game->currentPlayer].buildings[ai->currentBuilding].type){
             case CITY:
                 //Create peasant?
@@ -162,20 +166,19 @@ int routineAI(struct game * game, ai * ai){
                 break;
 
             case BARRACK:
-            //Create soldier?
-            if(getNPeasants(*game) >= getNSoldiers(*game) && game->players[game->currentPlayer].gold > SOLDIER_COST){
-                ai->actionTarget = getTokenCreationPos(*game, game->players[game->currentPlayer].buildings[ai->currentBuilding].pos);
-                action = UNIT_CREATION;
-            }
+                //Create soldier?
+                if(getNPeasants(*game) >= getNSoldiers(*game) && game->players[game->currentPlayer].gold > SOLDIER_COST){
+                    ai->actionTarget = getTokenCreationPos(*game, game->players[game->currentPlayer].buildings[ai->currentBuilding].pos);
+                    action = UNIT_CREATION;
+                }
 
-            else{
-                action = PASS_TURN;
-            }
+                else{
+                    action = PASS_TURN;
+                }
 
-            break;
+                break;
         }
     }
-
 
     return action;
 }
@@ -183,7 +186,7 @@ int routineAI(struct game * game, ai * ai){
 
 
 coord pathfindingAI(struct game * game, int unitId, coord targetPos, int tileIsOccupied){
-    //Allows dynamic multi-turn pathfinding in a 2D environment using a particular case of Dijsktra's algorithm ;)
+    //Allows dynamic multi-turn pathfinding in a 2D environment using a particular case of Dijsktra's algorithm
     //Returns the position the unit will have to move to for the current turn
 
     coord returnCoord;
@@ -191,23 +194,69 @@ coord pathfindingAI(struct game * game, int unitId, coord targetPos, int tileIsO
     returnCoord.y = 0;
 
     int originalMovCap = game->players[game->currentPlayer].units[unitId].movements;
-    game->players[game->currentPlayer].units[unitId].movements = 999;   //Unlimited movement range is used to figure out entire path
+    game->players[game->currentPlayer].units[unitId].movements = 999;   //More would allow huge computation time
 
-    coord * path;
-    int pathFound = moveUnit(game, unitId, targetPos, &path);
 
-    if(pathFound){
-        returnCoord = path[originalMovCap - 1];    //Tile to reach in one turn
+    coord * path = NULL;
+    int pathFound = 0;
+
+    if(!tileIsOccupied){
+        //We can directly move to it
+        pathFound = moveUnit(game, unitId, targetPos, &path);
     }
-    else if(pathFound > 0 && pathFound <= originalMovCap && tileIsOccupied){
-        //If we can directly reach the tile and it's supposed to be occupied, we stop the tile before
-        returnCoord = path[originalMovCap - 2];
+    else{
+        //Otherwise we need to move to an adjacent tile
+        coord newTarget;
+        for(int i=0; i<4; i++){
+            newTarget.x = targetPos.x;
+            newTarget.y = targetPos.y;
+
+            switch(i){
+                case 0: //Up
+                    newTarget.y--;
+                    break;
+
+                case 1: //Right
+                    newTarget.x++;
+                    break;
+
+                case 2: //Down
+                    newTarget.y++;
+                    break;
+
+                case 3: //Left
+                    newTarget.x--;
+                    break;
+            }
+
+            pathFound = moveUnit(game, unitId, newTarget, &path);
+
+            if(pathFound){
+                break;
+            }
+        }
+    }
+
+
+    //Checking result of path research
+    if(pathFound > 0 && pathFound <= originalMovCap){
+        //If we can directly reach the tile
+        returnCoord = path[pathFound - 1];    //Tile to reach in one turn
+        free(path);
+    }
+    else if(pathFound > 0 && pathFound > originalMovCap){
+        //If tile must be reached in several turns
+        returnCoord = path[originalMovCap - 1];
+        free(path);
+    }
+
+    else{   //No path found
+        returnCoord.x = 0;
+        returnCoord.y = 0;
     }
 
 
     game->players[game->currentPlayer].units[unitId].movements = originalMovCap;
-
-    free(path);
 
     return returnCoord;
 }
@@ -219,13 +268,17 @@ int estimateTrueDist(struct game * game, int unitId, coord targetPos){
     //(using pathfinding)
 
     int originalMovCap = game->players[game->currentPlayer].units[unitId].movements;
-    game->players[game->currentPlayer].units[unitId].movements = 999;
+    game->players[game->currentPlayer].units[unitId].movements = 999;    //More would allow huge computation time
 
     coord * path;
     int trueDistance = moveUnit(game, unitId, targetPos, &path);
 
     game->players[game->currentPlayer].units[unitId].movements = originalMovCap;
-    free(path);
+
+    if(trueDistance){
+        free(path);
+
+    }
 
     return trueDistance;
 }
@@ -321,6 +374,8 @@ int enemyDistToUnit(struct game game, ai ai, coord * enemyPos){
 
 
 coord getTokenCreationPos(struct game game, coord sourcePos){
+    //Determines the tile where a token will be created based on creator's position
+
     coord testPos;
     coord createPos;
     createPos.x = 0;

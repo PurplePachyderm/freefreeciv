@@ -2,10 +2,14 @@
 #include "display.h"
 #include "../game/game.h"
 
+#define QUIT_HUD 1
+#define QUIT_GAME 2
+#define QUIT_PROGRAM 3
+
 
 int countdownUpdate(int * countdown, int * countdownSec, int quit, int * newEvent, struct game * game);
 
-void mainHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game game);
+int mainHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game game);
 int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera);
 void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera);
 

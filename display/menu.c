@@ -7,6 +7,7 @@
 
 #include "../include/display/menu.h"
 #include "../include/display/display.h"
+#include "../include/display/hud.h"
 
 void menu()
 {
@@ -53,6 +54,8 @@ void menu()
 	SDL_FreeSurface(IMAGE);
 }
 
+
+
 void aff_carre(SDL_Renderer* RENDERER, int x, int y, int w, int h)
 {
 	SDL_Rect RECT;
@@ -63,6 +66,8 @@ void aff_carre(SDL_Renderer* RENDERER, int x, int y, int w, int h)
 
 	SDL_RenderFillRect(RENDERER,&RECT);
 }
+
+
 
 void change_couleur(SDL_Renderer* RENDERER)
 {
@@ -172,7 +177,7 @@ int inGameMenu(SDL_Renderer * renderer){
 			&& event.button.x >= SCREEN_WIDTH/2 - quitGame->w/2 && event.button.x <= SCREEN_WIDTH/2 + quitGame->w/2
 			&& event.button.y >= 5*SCREEN_HEIGHT/8-((quitGame->h*fontFactor+1)/2) && event.button.y <= 5*SCREEN_HEIGHT/8-((quitGame->h*fontFactor+1)/2)+quitGame->h * fontFactor + 1){
 				quit = 1;
-				exitGame = 1;
+				exitGame = QUIT_PROGRAM;
 			}
         }
     }
