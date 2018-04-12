@@ -1,8 +1,8 @@
 #pragma once
 #include "game_init.hpp"
 
-char * roomRequest();
-int parseRooms(room ** rooms, const char * jString);
+
+int parseRooms(room ** rooms, char * jString);
 
 int parsePlayers(mPlayer ** players, char * jString);
 char * serializePlayerSelf(char * pseudo, int nPlayers, int roomId);

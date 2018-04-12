@@ -14,47 +14,47 @@ freefreeciv:	main.o $(DISPLAY_FILES) $(GAME_FILES) $(MULTIPLAYER_FILES)
 
 #Main
 main.o:	main.c
-	g++ -c main.c -Wall
+	gcc -c main.c -Wall
 
 
 #Display
 display.o:	display/display.c
-	g++ -c display/display.c -Wall
+	gcc -c display/display.c -Wall
 
 map_display.o:	display/map_display.c
-	g++ -c display/map_display.c -Wall
+	gcc -c display/map_display.c -Wall
 
 tokens_display.o:	display/tokens_display.c
-	g++ -c display/tokens_display.c -Wall
+	gcc -c display/tokens_display.c -Wall
 
 menu.o:	display/menu.c
-	g++ -c display/menu.c -Wall
+	gcc -c display/menu.c -Wall
 
 hud.o:	display/hud.c
-	g++ -c display/hud.c -Wall
+	gcc -c display/hud.c -Wall
 
 hud_display.o:	display/hud_display.c
-	g++ -c display/hud_display.c -Wall
+	gcc -c display/hud_display.c -Wall
 
 
 #Game
 structures_init.o:
-	g++ -c game/structures_init.c -Wall
+	gcc -c game/structures_init.c -Wall
 
 save_system.o:
-	g++ -c game/save_system.c -Wall
+	gcc -c game/save_system.c -Wall
 
 units_actions.o:
-	g++ -c game/units_actions.c -Wall
+	gcc -c game/units_actions.c -Wall
 
 game.o:
-	g++ -c game/game.c -Wall
+	gcc -c game/game.c -Wall
 
 map.o:
-	g++ -c game/map.c -Wall
+	gcc -c game/map.c -Wall
 
 ai.o:
-	g++ -c game/ai.c -Wall
+	gcc -c game/ai.c -Wall
 
 
 #Multiplayer
@@ -62,7 +62,7 @@ easywsclient.o:
 	g++ -c multiplayer/easywsclient.cpp -Wall
 
 json.o:
-	g++ -c multiplayer/json.c -Wall
+	gcc -c multiplayer/json.c -Wall
 
 game_init.o:
 	g++ -c multiplayer/game_init.cpp -Wall

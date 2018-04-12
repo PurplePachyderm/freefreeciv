@@ -1,10 +1,3 @@
-// This code comes from:
-// https://github.com/dhbaird/easywsclient
-//
-// To get the latest version:
-// wget https://raw.github.com/dhbaird/easywsclient/master/easywsclient.hpp
-// wget https://raw.github.com/dhbaird/easywsclient/master/easywsclient.cpp
-
 #ifdef _WIN32
     #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
         #define _CRT_SECURE_NO_WARNINGS // _CRT_SECURE_NO_WARNINGS for sscanf errors in MSVC2013 Express

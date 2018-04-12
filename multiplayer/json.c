@@ -6,63 +6,40 @@
 #include "../include/multiplayer/json.h"
 
 
-char * roomRequest(){
-    printf("roomRequest\n");
-    char * jsonString = (char *) malloc(15 * sizeof(char));
-
-    json_object * json = json_object_new_object();
-
-    json_object * jEventType = json_object_new_string("roomsRequest");
-    json_object_object_add(json, "eventType", jEventType);
-
-
-    sprintf(jsonString, json_object_to_json_string(json));
-
-    json_object_put(json);
-
-    return jsonString;
-}
-
-
-
-int parseRooms(room ** rooms, const char * jString){
-    printf("parseRooms\n");
+int parseRooms(room ** rooms, char * jString){
     json_object * json = json_tokener_parse(jString);
 
     //Get number of rooms
     json_object * jNRooms = json_object_object_get(json, "nRooms");
     int nRooms = json_object_get_int(jNRooms);
     free(jNRooms);
-    if(nRooms != 0){    //If conversion has been successful
-        *rooms = (room*) malloc(nRooms * sizeof(room));
 
-        json_object * jRooms = json_object_object_get(json, "rooms");
+    *rooms = (room*) malloc(nRooms * sizeof(room));
 
-        for(int i=0; i<nRooms; i++){
-            json_object * jRoom = json_object_array_get_idx(jRooms, i);
+    json_object * jRooms = json_object_object_get(json, "rooms");
+
+    for(int i=0; i<nRooms; i++){
+        json_object * jRoom = json_object_array_get_idx(jRooms, i);
 
 
-            //Get name
-            (*rooms)[i].name = (char*) malloc(100*sizeof(char));
-            json_object * jName = json_object_object_get(jRoom, "name");
-            sprintf((*rooms)[i].name, json_object_get_string(jName));
-            free(jName);
+        //Get name
+        (*rooms)[i].name = (char*) malloc(100*sizeof(char));
+        json_object * jName = json_object_object_get(jRoom, "name");
+        sprintf((*rooms)[i].name, json_object_get_string(jName));
+        free(jName);
 
-            //Get nPlayers
-            json_object * jNPlayers = json_object_object_get(jRoom, "nPlayers");
-            (*rooms)[i].nPlayers = json_object_get_int(jNPlayers);
-            free(jNPlayers);
+        //Get nPlayers
+        json_object * jNPlayers = json_object_object_get(jRoom, "nPlayers");
+        (*rooms)[i].nPlayers = json_object_get_int(jNPlayers);
+        free(jNPlayers);
 
-            free(jRoom);
-        }
-
-        free(jRooms);
+        free(jRoom);
     }
 
+    free(jRooms);
 
     return nRooms;
 }
-
 
 
 int parsePlayers(mPlayer ** players, char * jString){

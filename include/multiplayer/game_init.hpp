@@ -1,7 +1,5 @@
 #pragma once
 #include "../game/game.h"
-#include <SDL2/SDL.h>
-#include "easywsclient.hpp"
 
 //Events codes
 #define M_MOVEMENT 1
@@ -26,7 +24,7 @@ typedef struct{
     char * name;
     int nPlayers;
     mPlayer * players;
-    struct game game;
+    struct struct game game;
 }room;
 
 typedef struct{
@@ -35,7 +33,4 @@ typedef struct{
     coord target;
 }event;
 
-int wsConnectTest(char * string);
-int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture);
-
-int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture);
+int wsConnect();
