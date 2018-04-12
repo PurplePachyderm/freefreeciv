@@ -1,13 +1,8 @@
 #include "game.h"
 
-#define MIN_DIST 5
-#define N_RESOURCES 4
+#define MIN_DIST 7
+#define N_RESOURCES 5   //Number for each type
 
-/*
-void gen_points(coord* j1, coord* j2);
-void gen_ressources(ressources* res);
-void distances_points(coord* j1,coord* j2,ressources* res);
-*/
-
-void genSpawns(game * game);
-void genResources(game * game);
+void genSpawns(struct struct game * game);
+void genResources(struct struct game * game);
+void genGame(struct struct game * game, int nPlayers, int * isAIControlled);

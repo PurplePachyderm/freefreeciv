@@ -71,6 +71,10 @@ void dispUnits(SDL_Renderer * renderer, SDL_Texture * texture, view camera, play
 
         if( (x+width>0 && y+width>0) || (x<SCREEN_WIDTH && y<SCREEN_HEIGHT) ){	//if statement avoids blitting sprites out of the screen
             blitSprite(renderer, texture, sprite.x, sprite.y, x, y, width);
+
+            if(player.units[i].isBusy){
+                blitSprite(renderer, texture, 3, 21, x, y, width);  //Indicator that the unit has been used
+            }
         }
     }
 }
@@ -143,6 +147,10 @@ void dispBuildings(SDL_Renderer * renderer, SDL_Texture * texture, view camera, 
 
         if( (x+width>0 && y+width>0) || (x<SCREEN_WIDTH && y<SCREEN_HEIGHT) ){	//if statement avoids blitting sprites out of the screen
             blitSprite(renderer, texture, sprite.x, sprite.y, x, y, width);
+
+            if(player.buildings[i].isBusy){
+                blitSprite(renderer, texture, 3, 21, x, y, width);  //Indicator that the building has been used
+            }
         }
     }
 }
@@ -156,7 +164,7 @@ void dispPlayer(SDL_Renderer * renderer, SDL_Texture * texture, view camera, pla
 
 
 
-void dispResources(SDL_Renderer * renderer, SDL_Texture * texture, view camera, map map){
+void dispResources(SDL_Renderer * renderer, SDL_Texture * texture, view camera, struct map map){
     coord sprite;
 
     int x;
@@ -187,7 +195,7 @@ void dispResources(SDL_Renderer * renderer, SDL_Texture * texture, view camera, 
 
 
 
-void dispTokens(SDL_Renderer * renderer, SDL_Texture * texture, view camera, game game){
+void dispTokens(SDL_Renderer * renderer, SDL_Texture * texture, view camera, struct game game){
     dispResources(renderer, texture, camera, game.map);
 
     for(int i=0; i<game.nPlayers; i++){

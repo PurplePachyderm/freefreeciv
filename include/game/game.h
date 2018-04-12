@@ -27,6 +27,10 @@
 
 #define TURN_TIME 90 //sec
 
+//Costs
+#define PEASANT_COST 2
+#define SOLDIER_COST 3
+#define BARRACK_COST 5
 
 
         //Structures
@@ -80,29 +84,29 @@ typedef struct{
 }resource;
 
 
-typedef struct{
+struct map{
     int size;
 
     resource * resources;   //Array
     int nResources;
-}map;
+};
 
 
     //Game (contains every info about the current game)
-typedef struct{
+struct game{
     player * players;   //Array
     int nPlayers;
     int currentPlayer;
 
-    map map;
-}game;
+    struct struct map map;
+};
 
 
     //Prototypes
-int checkOwnBuilding(game, coord pos);
-int checkOwnUnit(game, coord pos);
+int checkOwnBuilding(struct game, coord pos);
+int checkOwnUnit(struct game, coord pos);
 
-int checkForeignBuilding(game, coord pos, int * ownerId);
-int checkForeignUnit(game, coord pos, int * ownerId);
+int checkForeignBuilding(struct game, coord pos, int * ownerId);
+int checkForeignUnit(struct game, coord pos, int * ownerId);
 
-void busyReset(game * game);
+void busyReset(struct struct game * game);

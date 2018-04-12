@@ -1,14 +1,15 @@
 #Variables
 DISPLAY_FILES = display.o map_display.o tokens_display.o menu.o hud.o hud_display.o
-GAME_FILES = structures_init.o save_system.o units_actions.o game.o map.o
-LIBS = -Llib -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -ljson-c
+GAME_FILES = structures_init.o save_system.o units_actions.o game.o map.o ai.o
+MULTIPLAYER_FILES = easywsclient.o json.o game_init.o
+LIBS = -Llib -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -ljson-c -lcurl -ljson -lm
 
 
 all: freefreeciv clean
 
 #Executable
-freefreeciv:	main.o $(DISPLAY_FILES) $(GAME_FILES)
-	gcc -o freefreeciv main.o $(DISPLAY_FILES) $(GAME_FILES) -Wall $(LIBS) -lm
+freefreeciv:	main.o $(DISPLAY_FILES) $(GAME_FILES) $(MULTIPLAYER_FILES)
+	g++ -o freefreeciv main.o $(DISPLAY_FILES) $(GAME_FILES) $(MULTIPLAYER_FILES) -Wall $(LIBS)
 
 
 #Main
@@ -52,6 +53,19 @@ game.o:
 map.o:
 	gcc -c game/map.c -Wall
 
+ai.o:
+	gcc -c game/ai.c -Wall
+
+
+#Multiplayer
+easywsclient.o:
+	g++ -c multiplayer/easywsclient.cpp -Wall
+
+json.o:
+	gcc -c multiplayer/json.c -Wall
+
+game_init.o:
+	g++ -c multiplayer/game_init.cpp -Wall
 
 
 #Phony

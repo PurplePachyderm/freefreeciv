@@ -1,14 +1,14 @@
 #include "../coord.h"
 #include "game.h"
 
-int checkMap(game game, coord pos);
-void pathTesting(game game, coord startPos, coord targetPos, int size, coord * path, int currentIndex, int * pathFound);
-int moveUnit(game * game, int unitId, coord targetPos, coord ** path);
+int checkMap(struct struct game game, coord pos);
+void pathTesting(struct struct game game, coord startPos, coord targetPos, int size, coord * path, int currentIndex, int * pathFound);
+int moveUnit(struct struct game * game, int unitId, coord targetPos, coord ** path);
 
-void collect(game * game, int unitId, coord targetPos);
+void collect(struct struct game * game, int unitId, coord targetPos);
 
-void attack(game * game, int unitId, coord targetPos);
+void attack(struct struct game * game, int unitId, coord targetPos);
 
-void createPeasant(game * game, coord pos, int cityId);
-void createSoldier(game * game, coord pos, int barrackId);
-void createBarrack(game * game, coord pos, int peasantId);
+void createPeasant(struct struct game * game, coord pos, int cityId);
+void createSoldier(struct struct game * game, coord pos, int barrackId);
+void createBarrack(struct struct game * game, coord pos, int peasantId);

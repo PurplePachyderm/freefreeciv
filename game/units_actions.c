@@ -8,7 +8,7 @@
 
 //XXX NEEDS TESTING
 
-int checkMap(game game, coord pos){
+int checkMap(struct struct game game, coord pos){
     //Iterates all game objects to check if a tile is free
     int tileIsOccupied = 0;
 
@@ -34,8 +34,8 @@ int checkMap(game game, coord pos){
 
 
 
-void pathTesting(game game, coord startPos, coord targetPos, int size, coord * path, int currentIndex, int * pathFound){
-    //This function will review all path possibilities of a given size to a target pos
+void pathTesting(struct struct game game, coord startPos, coord targetPos, int size, coord * path, int currentIndex, int * pathFound){
+    //This function will review all path possibilities of a given size to a target pos //Soldier Cost
     if(currentIndex<size && !*pathFound){
         coord newPos;
 
@@ -80,7 +80,7 @@ void pathTesting(game game, coord startPos, coord targetPos, int size, coord * p
 
 
 
-int moveUnit(game * game, int unitId, coord targetPos, coord ** path){
+int moveUnit(struct struct game * game, int unitId, coord targetPos, coord ** path){
     //Returns 0 if no pass has been found, otherwise returns its length
     coord startPos = game->players[game->currentPlayer].units[unitId].pos;
     int size = 0;
@@ -111,7 +111,7 @@ int moveUnit(game * game, int unitId, coord targetPos, coord ** path){
 
 
 
-void collect(game * game, int unitId, coord targetPos){
+void collect(struct struct game * game, int unitId, coord targetPos){
     int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
     int distY = abs(targetPos.y-game->players[game->currentPlayer].units[unitId].pos.y);
     int dist = distX+distY;
@@ -137,7 +137,7 @@ void collect(game * game, int unitId, coord targetPos){
 
 
 
-void attack(game * game, int unitId, coord targetPos){
+void attack(struct struct game * game, int unitId, coord targetPos){
     int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
     int distY = abs(targetPos.y-game->players[game->currentPlayer].units[unitId].pos.y);
     int dist = distX+distY;
@@ -230,7 +230,7 @@ void attack(game * game, int unitId, coord targetPos){
 
 
 //TODO Substract resources
-void createPeasant(game * game, coord pos, int cityId){
+void createPeasant(struct struct game * game, coord pos, int cityId){
     int distX = abs(game->players[game->currentPlayer].buildings[cityId].pos.x - pos.x);
     int distY = abs(game->players[game->currentPlayer].buildings[cityId].pos.y - pos.y);
     int dist = distX + distY;
@@ -242,13 +242,13 @@ void createPeasant(game * game, coord pos, int cityId){
         initPeasant(&game->players[game->currentPlayer].units[game->players[game->currentPlayer].nUnits-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].buildings[cityId].isBusy = 1;
 
-        game->players[game->currentPlayer].gold -= 2;   //Peasant Cost
+        game->players[game->currentPlayer].gold -= PEASANT_COST;
     }
 }
 
 
 
-void createSoldier(game * game, coord pos, int barrackId){
+void createSoldier(struct struct game * game, coord pos, int barrackId){
     int distX = abs(game->players[game->currentPlayer].buildings[barrackId].pos.x - pos.x);
     int distY = abs(game->players[game->currentPlayer].buildings[barrackId].pos.y - pos.y);
     int dist = distX + distY;
@@ -260,13 +260,13 @@ void createSoldier(game * game, coord pos, int barrackId){
         initSoldier(&game->players[game->currentPlayer].units[game->players[game->currentPlayer].nUnits-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].buildings[barrackId].isBusy = 1;
 
-        game->players[game->currentPlayer].gold -= 3;   //Soldier Cost
+        game->players[game->currentPlayer].gold -= SOLDIER_COST;
     }
 }
 
 
 
-void createBarrack(game * game, coord pos, int peasantId){
+void createBarrack(struct struct game * game, coord pos, int peasantId){
     int distX = abs(game->players[game->currentPlayer].units[peasantId].pos.x - pos.x);
     int distY = abs(game->players[game->currentPlayer].units[peasantId].pos.y - pos.y);
     int dist = distX + distY;
@@ -278,6 +278,6 @@ void createBarrack(game * game, coord pos, int peasantId){
         initBarrack(&game->players[game->currentPlayer].buildings[game->players[game->currentPlayer].nBuildings-1], game->currentPlayer, pos.x, pos.y);
         game->players[game->currentPlayer].units[peasantId].isBusy = 1;
 
-        game->players[game->currentPlayer].wood -= 5;   //Barrack Cost
+        game->players[game->currentPlayer].wood -= BARRACK_COST;
     }
 }
