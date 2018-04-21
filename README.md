@@ -1,6 +1,8 @@
 # Freefreeciv
 [WIP] SDL turn-based strategy game made for a school project.
 
+Server repository [here](https://github.com/Arveto/freefreeciv-server)
+
 Teasing: Companion app incoming...
 
 ### Dependencies: 
