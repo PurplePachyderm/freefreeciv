@@ -2,10 +2,10 @@
 #include "game_init.hpp"
 
 
-int parseRooms(room ** rooms, char * jString);
+int parseRooms(room ** rooms, const char * jString);
 
-int parsePlayers(mPlayer ** players, char * jString);
+int parsePlayers(mPlayer ** players, const char * jString);
 char * serializePlayerSelf(char * pseudo, int nPlayers, int roomId);
 
-event parseEvent(char * jString);
-char * serializeEvent(int type, int unitId, coord targetPos);
+event parseEvent(const char * jString);
+char * serializeEvent(event event);

@@ -9,8 +9,7 @@
 #include "../include/game/structures_init.h"
 
 //XXX Needs testing
-void genSpawns(struct struct game * game){
-	srand(time(NULL));
+void genSpawns(struct game * game){
 
 	int distX;
 	int distY;
@@ -110,8 +109,7 @@ void genSpawns(struct struct game * game){
 
 
 
-void genResources(struct struct game * game){
-	srand(time(NULL));
+void genResources(struct game * game){
 
 	game->map.nResources = (N_RESOURCES + game->nPlayers - 2)*2;	//N_RESOURCES is the number for each type
 	game->map.resources = (resource*)malloc(sizeof(resource)*game->map.nResources);
@@ -121,8 +119,8 @@ void genResources(struct struct game * game){
 	do{
 		//Generation
 		for(int i=0; i<game->map.nResources; i++){
-				game->map.resources[i].pos.x=(rand()%MAP_SIZE)+1;
-				game->map.resources[i].pos.y=(rand()%MAP_SIZE)+1;
+				game->map.resources[i].pos.x = (rand()%MAP_SIZE)+1;
+				game->map.resources[i].pos.y = (rand()%MAP_SIZE)+1;
 
 				if(i < game->map.nResources/2)
 					game->map.resources[i].type=GOLD;
@@ -141,35 +139,59 @@ void genResources(struct struct game * game){
 				if(game->map.resources[i].pos.x == game->players[j].buildings[0].pos.x &&
 				game->map.resources[i].pos.y == game->players[j].buildings[0].pos.y){
 					restart = 1;
-					break;
 				}
 
 				//With peasant
 				else if(game->map.resources[i].pos.x == game->players[j].units[0].pos.x &&
 				game->map.resources[i].pos.y == game->players[j].units[0].pos.y){
 					restart = 1;
-					break;
 				}
 			}
 		}
 
-		if(restart){
-			break;
-		}
 
-		else{
-			//Check conflict with other resource
-			for(int i=0; i>game->map.nResources; i++){
-				for(int j=0; j>game->map.nResources; j++){
-					if(i != j){
-						if(game->map.resources[i].pos.x == game->map.resources[j].pos.x &&
-						game->map.resources[i].pos.y == game->map.resources[j].pos.y){
-							restart = 1;
-							break;
-						}
+		//Check conflict with other resource
+		for(int i=0; i<game->map.nResources; i++){
+			for(int j=0; j<game->map.nResources; j++){
+				if(i != j){
+					if(game->map.resources[i].pos.x == game->map.resources[j].pos.x &&
+					game->map.resources[i].pos.y == game->map.resources[j].pos.y){
+						restart = 1;
 					}
 				}
 			}
+		}
+
+
+		//Checks for minimal distance to city
+		int hasGold;
+		int hasWood;
+
+		for(int i=0; i<game->nPlayers; i++){
+			hasGold = 0;
+			hasWood = 0;
+
+			for(int j=0; j<game->map.nResources; j++){
+				int distX = abs(game->map.resources[j].pos.x - game->players[i].buildings[0].pos.x);
+				int distY = abs(game->map.resources[j].pos.y - game->players[i].buildings[0].pos.y);
+				int dist = distX + distY;
+
+				if(dist <= MIN_DIST){
+					switch(game->map.resources[j].type){
+						case GOLD:
+							hasGold = 1;
+							break;
+
+						case WOOD:
+							hasWood = 1;
+					}
+				}
+			}
+
+			if(!hasGold || !hasWood){
+				restart = 1;
+			}
+
 		}
 
 	}while(restart);
@@ -178,7 +200,9 @@ void genResources(struct struct game * game){
 
 
 
-void genGame(struct struct game * game, int nPlayers, int * isAIControlled){
+void genGame(struct game * game, int nPlayers, int * isAIControlled){
+	srand(time(NULL));
+
 	game->players = (player*) malloc(nPlayers*sizeof(player));
 	game->nPlayers = nPlayers;
 	game->currentPlayer = 0;

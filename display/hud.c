@@ -61,7 +61,6 @@ int mainHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
 			}
 
 			else{	//AI
-				printf("Enter AIHud\n");
 				AIHud(renderer, texture, &game, &camera);
 				camera.leftClick = 0;	//Stays at 1 after clicking on next turn button
 			}
