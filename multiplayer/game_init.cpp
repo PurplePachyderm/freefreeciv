@@ -5,6 +5,7 @@
 #include "../include/multiplayer/easywsclient.hpp"
 #include "../include/multiplayer/json.h"
 #include "../include/display/display.h"
+#include "../include/game/map.h"
 #include <json-c/json.h>
 
 #ifdef _WIN32
@@ -40,6 +41,8 @@ int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture){
     assert(ws);
 
     //Send pseudo
+    char * pseudo = readPseudo();
+
     char * jsonString = (char *) malloc(100 * sizeof(char));
     json_object * json = json_object_new_object();
 
@@ -54,6 +57,7 @@ int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture){
 
     ws->send(jsonString);
     free(jsonString);
+    free(pseudo);
 
 
     //Lobby
@@ -202,7 +206,6 @@ public:
     int readyToPlay;
 
     void callbackRoom(const std::string & message, mPlayer ** players, int * nPlayers, int *readyToPlay){
-        getchar();
 
         //Checking if game is starting
         json_object * json = json_tokener_parse(&message[0]);
@@ -246,16 +249,12 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 
     //Sending request of players and own infos
     mPlayer player;
-    player.pseudo = (char*) malloc(100*sizeof(char));
-    sprintf(player.pseudo, "Jean-Charles Babos IV");    //Get own pseudo in external file
+    player.pseudo = readPseudo();
     player.isAIControlled = 0;
     coord target;
     target.x = -1;
     target.y = -1;
     event eventJoinRoom = {PLAYER_JOIN_ROOM, roomId, -1, player, -1, target};
-    // eventJoinRoom.type = PLAYER_JOIN_ROOMY;
-    // eventJoinRoom.roomId = roomId;
-    // eventJoinRoom.playerInfos = player;
 
 
     char * jString;
@@ -283,6 +282,21 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
         }
 
         if(instance.readyToPlay){
+            char * pseudo = readPseudo();
+
+            //If we're host
+            if(strcat(pseudo, room.host) == 0){
+                int * AIs = (int*) malloc(room.nPlayers*sizeof(int));
+
+                for(int i=0; i<room.nPlayers; i++){
+                    AIs[i] = room.players[i].isAIControlled;
+                }
+
+                struct game game;
+                genGame(&game, room.nPlayers, AIs);
+
+                //TODO Send to server
+            }
             //inGame(ws, ...);
             printf("Yeah =)\n");
         }
@@ -290,4 +304,22 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
     }
 
     return 0;
+}
+
+
+char * readPseudo(){
+    FILE * settings = fopen("settings.json", "r");
+
+    char jString [300];
+    jString[0] = '\0';
+    fgets(jString, 300, settings);
+    fclose(settings);
+
+    json_object * json = json_tokener_parse(jString);
+    json_object * jPseudo = json_object_object_get(json, "pseudo");
+
+    char * pseudo = (char *) malloc(100 * sizeof(char));
+    sprintf(pseudo, json_object_get_string(jPseudo));
+
+    return pseudo;
 }

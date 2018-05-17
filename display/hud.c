@@ -37,6 +37,7 @@ int countdownUpdate(int * countdown, int * countdownSec, int quit, int * newEven
 
 //Main HUD (Main game function, sets everything to default state)
 int mainHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
+
 	int quit = 0;
 	view camera;
     camera.offset.x = (SCREEN_WIDTH - (MAP_SIZE+2)*TILE_SIZE) / 2;	//Centers map

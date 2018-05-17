@@ -18,13 +18,13 @@
 //Temporary main, for testing purpose only
 int main(int argc, char** argv){
 
-		//SDL Initialization
+	//SDL Initialization
 	SDL_Window  * window;
 	SDL_Renderer * renderer;
 	SDL_CreateWindowAndRenderer(SCREEN_WIDTH, SCREEN_HEIGHT,
-								SDL_WINDOW_FULLSCREEN,
-            					&window,
-            					&renderer);
+	 							SDL_WINDOW_FULLSCREEN,
+	         					&window,
+	         					&renderer);
 
 
 
@@ -37,15 +37,20 @@ int main(int argc, char** argv){
 	texture = SDL_CreateTextureFromSurface(renderer, sprites);
 	SDL_FreeSurface(sprites);
 
+
 	TTF_Init();
 
+
+	//***** Solo play *****
 		//Game init
 	struct game game;
+
 	//loadSave("test", &game);
+
 	int nPlayers = 4;
 	int * isAIControlled = (int*) malloc (4*sizeof(int));
-	//Switch one of tose to 0 to add players
-	isAIControlled[0] = 1;
+	//Switch one of those to 0 to add players
+	isAIControlled[0] = 0;
 	isAIControlled[1] = 1;
 	isAIControlled[2] = 1;
 	isAIControlled[3] = 1;
@@ -55,8 +60,14 @@ int main(int argc, char** argv){
 	mainHud(renderer, texture, game);
 
 
-	//wsConnectTest(jString);
+	//***** Multiplayer testing *****
+	//SDL_DestroyWindow(window);	//Delete after WS test
+	//wsConnectTest(string);
 	//wsConnect(renderer, texture);
+
+
+	//***** Main menu *****
+	//mainMenu(renderer, texture);
 
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);

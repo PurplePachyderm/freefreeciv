@@ -53,3 +53,4 @@ int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture);
 
 int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture);
 int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture, room room, int roomId);
+char * readPseudo();

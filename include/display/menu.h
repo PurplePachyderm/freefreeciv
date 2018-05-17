@@ -1,8 +1,6 @@
 #include "../coord.h"
 #include "../game/game.h"
 
-void aff_carre(SDL_Renderer* RENDERER, int x, int y, int w, int h);
-void change_couleur(SDL_Renderer* RENDERER);
-void menu();
-
+void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture);
+int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture);
 int inGameMenu(SDL_Renderer * renderer);
