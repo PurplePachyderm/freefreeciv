@@ -123,7 +123,7 @@ void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view * camera,
 		dispTokens(renderer, texture, *camera, *game);
 		SDL_RenderPresent(renderer);
 
-		while(countdown < 1000){
+		while(countdown < 250){
 			SDL_Delay(REFRESH_PERIOD);
 			countdown += REFRESH_PERIOD;
 			while(SDL_PollEvent(&event)){
