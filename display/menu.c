@@ -8,9 +8,10 @@
 #include "../include/display/menu.h"
 #include "../include/display/display.h"
 #include "../include/display/hud.h"
+#include "../include/game/map.h"
 
 
-//Main menu
+	//***Main menu***
 void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 	SDL_Event event;
 	int quit = 0;
@@ -24,18 +25,26 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 	SDL_Rect srcRect;
 	SDL_Rect destRect;
 
-	SDL_Surface * background;
-	SDL_Surface * title;
-	SDL_Surface * localPlay;
-	SDL_Surface * load;
-	SDL_Surface * multiplayer;
-	SDL_Surface * sQuit;
+	SDL_Surface * background = NULL;
+	SDL_Surface * title = NULL;
+	SDL_Surface * localPlay = NULL;
+	SDL_Surface * load = NULL;
+	SDL_Surface * multiplayer = NULL;
+	SDL_Surface * sQuit = NULL;
 
-	//Event loop
+
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
 
 		if(refresh){
+
+			SDL_FreeSurface(background);
+			SDL_FreeSurface(title);
+			SDL_FreeSurface(localPlay);
+			SDL_FreeSurface(load);
+			SDL_FreeSurface(multiplayer);
+			SDL_FreeSurface(sQuit);
+
 			//Background
 			setRectangle(&srcRect, 0, 0, 3840, 2160); //Dim of background
 			setRectangle(&destRect, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -97,9 +106,8 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			SDL_DestroyTexture(textTexture);
 
 
-			//Quit
-			font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/16);
 
+			//Quit
 			sQuit = TTF_RenderText_Blended(font, "quit", color);
 			textTexture = SDL_CreateTextureFromSurface(renderer, sQuit);
 
@@ -117,6 +125,8 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			refresh = 0;
 		}
 
+
+		//Events management
 		while(SDL_PollEvent(&event)){
 			//New local game
 			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
@@ -147,9 +157,8 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 
 
 
-//New game menu
+	//***New game menu***
 int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture){
-	//BUG Some memory is not freed correctly
 
 	SDL_Event event;
 	int quit = 0;
@@ -170,7 +179,24 @@ int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 	SDL_Surface * slot2 = NULL;
 	SDL_Surface * slot3 = NULL;
 	SDL_Surface * slot4 = NULL;
+	SDL_Surface * start = NULL;
 
+
+	struct game game;
+	game.nPlayers = 2;
+
+	int slots [4];
+	slots [0] = HUMAN;
+	slots [1] = AI_SLOT;
+	slots [2] = EMPTY;
+	slots [3] = EMPTY;
+
+	//Used for the naming of slot players ("Player 1", "AI 3", etc...)
+	int currentPlayer = 1;
+	int currentAI = 1;
+
+	//Contains the names of the 4 slots
+	char slotName [17];
 
 
 	while(!quit){
@@ -185,6 +211,7 @@ int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			SDL_FreeSurface(slot2);
 			SDL_FreeSurface(slot3);
 			SDL_FreeSurface(slot4);
+			SDL_FreeSurface(start);
 
 			//Background
 			setRectangle(&srcRect, 0, 0, 3840, 2160); //Dim of background
@@ -215,44 +242,103 @@ int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			//Slot 1
 			font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/16);
 
-			slot1 = TTF_RenderText_Blended(font, "slot 1", color);
+			if(slots[0] == HUMAN){
+				sprintf(slotName, "slot 1: player %d", currentPlayer);
+				currentPlayer++;
+			}
+			else if(slots[0] == AI_SLOT){
+				sprintf(slotName, "slot 1: ai %d", currentAI);
+				currentAI++;
+			}
+			else{
+				sprintf(slotName, "slot 1: empty");
+			}
+
+			slot1 = TTF_RenderText_Blended(font, slotName, color);
 			textTexture = SDL_CreateTextureFromSurface(renderer, slot1);
 
 			setRectangle(&srcRect, 0, slot1->h - (slot1->h*fontFactor+1), slot1->w, slot1->h * fontFactor + 1);
-			setRectangle(&destRect, SCREEN_WIDTH/2 - slot1->w/2, 3*SCREEN_HEIGHT/8-((slot1->h*fontFactor+1)/2), slot1->w, slot1->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - slot1->w/2, 2*SCREEN_HEIGHT/8-((slot1->h*fontFactor+1)/2), slot1->w, slot1->h * fontFactor + 1);
 			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
 			SDL_DestroyTexture(textTexture);
 
 
 			//Slot 2
-			slot2 = TTF_RenderText_Blended(font, "slot 2", color);
+			if(slots[1] == HUMAN){
+				sprintf(slotName, "slot 2: player %d", currentPlayer);
+				currentPlayer++;
+			}
+			else if(slots[1] == AI_SLOT){
+				sprintf(slotName, "slot 2: ai %d", currentAI);
+				currentAI++;
+			}
+			else{
+				sprintf(slotName, "slot 2: empty");
+			}
+
+			slot2 = TTF_RenderText_Blended(font, slotName, color);
 			textTexture = SDL_CreateTextureFromSurface(renderer, slot2);
 
 			setRectangle(&srcRect, 0, slot2->h - (slot2->h*fontFactor+1), slot2->w, slot2->h * fontFactor + 1);
-			setRectangle(&destRect, SCREEN_WIDTH/2 - slot2->w/2, 2*SCREEN_HEIGHT/4-((slot2->h*fontFactor+1)/2), slot2->w, slot2->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - slot2->w/2, 3*SCREEN_HEIGHT/8-((slot2->h*fontFactor+1)/2), slot2->w, slot2->h * fontFactor + 1);
 			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
 			SDL_DestroyTexture(textTexture);
 
 
 			//Slot 3
-			slot3 = TTF_RenderText_Blended(font, "slot 3", color);
+			if(slots[2] == HUMAN){
+				sprintf(slotName, "slot 3: player %d", currentPlayer);
+				currentPlayer++;
+			}
+			else if(slots[2] == AI_SLOT){
+				sprintf(slotName, "slot 3: ai %d", currentAI);
+				currentAI++;
+			}
+			else{
+				sprintf(slotName, "slot 3: empty");
+			}
+
+			slot3 = TTF_RenderText_Blended(font, slotName, color);
 			textTexture = SDL_CreateTextureFromSurface(renderer, slot3);
 
 			setRectangle(&srcRect, 0, slot3->h - (slot3->h*fontFactor+1), slot3->w,slot3->h * fontFactor + 1);
-			setRectangle(&destRect, SCREEN_WIDTH/2 - slot3->w/2, 5*SCREEN_HEIGHT/8-((slot3->h*fontFactor+1)/2), slot3->w, slot3->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - slot3->w/2, SCREEN_HEIGHT/2-((slot3->h*fontFactor+1)/2), slot3->w, slot3->h * fontFactor + 1);
 			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
 			SDL_DestroyTexture(textTexture);
 
 
 			//Slot 4
-			slot4 = TTF_RenderText_Blended(font, "slot 4", color);
+			if(slots[3] == HUMAN){
+				sprintf(slotName, "slot 4: player %d", currentPlayer);
+				currentPlayer++;
+			}
+			else if(slots[3] == AI_SLOT){
+				sprintf(slotName, "slot 4: ai %d", currentAI);
+				currentAI++;
+			}
+			else{
+				sprintf(slotName, "slot 4: empty");
+			}
+
+			slot4 = TTF_RenderText_Blended(font, slotName, color);
 			textTexture = SDL_CreateTextureFromSurface(renderer, slot4);
 
 			setRectangle(&srcRect, 0, slot4->h - (slot4->h*fontFactor+1), slot4->w, slot4->h * fontFactor + 1);
-			setRectangle(&destRect, SCREEN_WIDTH/2 - slot4->w/2, 6*SCREEN_HEIGHT/8-((slot4->h*fontFactor+1)/2), slot4->w, slot4->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - slot4->w/2, 5*SCREEN_HEIGHT/8-((slot4->h*fontFactor+1)/2), slot4->w, slot4->h * fontFactor + 1);
+			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(textTexture);
+
+
+			//Start button
+			start = TTF_RenderText_Blended(font, "start", color);
+			textTexture = SDL_CreateTextureFromSurface(renderer, start);
+
+			setRectangle(&srcRect, 0, start->h - (start->h*fontFactor+1), start->w, start->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - start->w/2, 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2), start->w, start->h * fontFactor + 1);
 			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
 			SDL_DestroyTexture(textTexture);
@@ -261,13 +347,85 @@ int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			SDL_RenderPresent(renderer);
 			TTF_CloseFont(font);
 
+			//Blocks refreshing
 			refresh = 0;
+
+			//Resets naming
+			currentPlayer = 1;
+			currentAI = 1;
 		}
 
+		//Events management
         while(SDL_PollEvent(&event)){
             if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
                 quit = 1;
             }
+
+			//Click on slot 1
+			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= SCREEN_WIDTH/2 - slot1->w/2 && event.button.x <= SCREEN_WIDTH/2 + slot1->w/2
+			&& event.button.y >= 2*SCREEN_HEIGHT/8-((slot1->h*fontFactor+1)/2) && event.button.y <= 2*SCREEN_HEIGHT/8-((slot1->h*fontFactor+1)/2)+slot1->h * fontFactor + 1){
+				slots[0] = cycleSlot(slots, 0, 1);
+				refresh = 1;
+			}
+
+			//Click on slot 2
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= SCREEN_WIDTH/2 - slot2->w/2 && event.button.x <= SCREEN_WIDTH/2 + slot2->w/2
+			&& event.button.y >= 3*SCREEN_HEIGHT/8-((slot2->h*fontFactor+1)/2) && event.button.y <= 3*SCREEN_HEIGHT/8-((slot2->h*fontFactor+1)/2)+slot2->h * fontFactor + 1){
+				slots[1] = cycleSlot(slots, 1, 1);
+				refresh = 1;
+			}
+
+			//Click on slot 3
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= SCREEN_WIDTH/2 - slot3->w/2 && event.button.x <= SCREEN_WIDTH/2 + slot3->w/2
+			&& event.button.y >= 4*SCREEN_HEIGHT/8-((slot3->h*fontFactor+1)/2) && event.button.y <= 4*SCREEN_HEIGHT/8-((slot3->h*fontFactor+1)/2)+slot3->h * fontFactor + 1){
+				slots[2] = cycleSlot(slots, 2, 1);
+				refresh = 1;
+			}
+
+			//Click on slot 4
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= SCREEN_WIDTH/2 - slot4->w/2 && event.button.x <= SCREEN_WIDTH/2 + slot4->w/2
+			&& event.button.y >= 5*SCREEN_HEIGHT/8-((slot4->h*fontFactor+1)/2) && event.button.y <= 5*SCREEN_HEIGHT/8-((slot4->h*fontFactor+1)/2)+slot4->h * fontFactor + 1){
+				slots[3] = cycleSlot(slots, 3, 1);
+				refresh = 1;
+			}
+
+			//Click Start button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= SCREEN_WIDTH/2 - start->w/2 && event.button.x <= SCREEN_WIDTH/2 + start->w/2
+			&& event.button.y >= 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2) && event.button.y <= 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2)+start->h * fontFactor + 1){
+				int nPlayers = 0;
+
+				//Get the number of players
+				for(int i=0; i<4; i++){
+					if(slots[i] != EMPTY)
+						nPlayers++;
+				}
+
+				int * isAIControlled;
+				isAIControlled = (int*) malloc(sizeof(int)*nPlayers);
+
+				int currentSlot = 0;
+				for(int i=0; i<4; i++){
+					if(slots[i] == HUMAN){
+						isAIControlled[currentSlot] = 0;
+						currentSlot++;
+					}
+
+					else if(slots[i] == AI_SLOT){
+						isAIControlled[currentSlot] = 1;
+						currentSlot++;
+					}
+				}
+
+				genGame(&game, nPlayers, isAIControlled);
+
+				mainHud(renderer, texture, game);
+				quit = 1;
+			}
         }
 
     }
@@ -278,12 +436,67 @@ int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 	SDL_FreeSurface(slot2);
 	SDL_FreeSurface(slot3);
 	SDL_FreeSurface(slot4);
+	SDL_FreeSurface(start);
 
 	return quitGame;
 }
 
 
-//Menu HUD (Quit game, load & save)
+
+int cycleSlot(int * slots, int slotId, int firstIteration){
+	//firstIteration allows to test the 2 other slot possibilities instead
+	//of just the next one by running the function again
+
+	int returnValue;
+	int newValue;
+
+	//Calculates the value that the slot is supposed to take (see macros in menu.h)
+	if(firstIteration)
+		newValue = (slots[slotId] + 1) % 3;
+	else
+		//Second possible value if it's not thee fist try
+		newValue = (slots[slotId] + 2) % 3;
+
+	int hasHuman = 0;
+	int nPlayers = 0;
+
+	int testedSlot;
+
+	for(int i=0; i<4; i++){
+		//Allows to test the new configuration
+		if(i == slotId)
+			testedSlot = newValue;
+		else
+			testedSlot = slots[i];
+
+		if(testedSlot == HUMAN)
+			hasHuman = 1;
+
+		if(testedSlot != EMPTY){
+			nPlayers++;
+		}
+	}
+
+	//We need at least 2 players with at least 1 human
+	if(nPlayers >= 2 && hasHuman){
+		returnValue = newValue;	//We allow the switch
+	}
+
+	else{
+		if(firstIteration)
+			//We try the other value
+			returnValue = cycleSlot(slots, slotId, 0);
+		else
+			//We leave the value unchanged
+			returnValue = slots[slotId];	//The value stays the same
+	}
+
+	return returnValue;
+}
+
+
+
+//***Menu HUD (Quit game, load & save)***
 int inGameMenu(SDL_Renderer * renderer){
     SDL_Event event;
     int quit = 0;
@@ -363,9 +576,8 @@ int inGameMenu(SDL_Renderer * renderer){
     while(!quit){
         SDL_Delay(REFRESH_PERIOD);
 
+		//Events management
         while(SDL_PollEvent(&event)){
-            //TODO Add all events
-            //Quit menu (cross)
             if(event.type == SDL_MOUSEBUTTONDOWN
         	&& event.button.button == SDL_BUTTON_LEFT
         	&& event.button.x >= SCREEN_WIDTH - TILE_SIZE && event.button.y <= TILE_SIZE){
