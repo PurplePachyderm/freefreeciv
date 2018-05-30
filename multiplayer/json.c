@@ -134,11 +134,11 @@ char * serializePlayerSelf(char * pseudo, int nPlayers, int roomId){
 
 
 
-event parseEvent(const char * jString){
+mEvent parseEvent(const char * jString){
     //WARNING Start game event not handled (since it needs the entire game object as parameter, too complicated)
 
     json_object * json = json_tokener_parse(jString);
-    event event;
+    mEvent event;
 
     //Most of the values won't be used (and not received) for one type of event
 
@@ -199,7 +199,7 @@ event parseEvent(const char * jString){
 
 
 
-char * serializeEvent(event event){
+char * serializeEvent(mEvent event){
     printf("Entering serializeEvent\n");
     char * jsonString = (char *) malloc(3000 * sizeof(char));
 

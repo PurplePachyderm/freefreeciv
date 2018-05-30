@@ -1,7 +1,7 @@
 #Variables
 DISPLAY_FILES = display.o map_display.o tokens_display.o menu.o hud.o hud_display.o
 GAME_FILES = structures_init.o save_system.o units_actions.o game.o map.o ai.o
-MULTIPLAYER_FILES = easywsclient.o json.o game_init.o #in_game.o
+MULTIPLAYER_FILES = easywsclient.o json.o game_init.o in_game.o multi_hud.o
 LIBS = -Llib -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf -ljson-c -lcurl -lm
 
 
@@ -67,8 +67,11 @@ json.o:
 game_init.o:
 	g++ -c multiplayer/game_init.cpp -Wall
 
-#in_game.o:
-	#g++ -c multiplayer/in_game.cpp -Wall
+in_game.o:
+	g++ -c multiplayer/in_game.cpp -Wall
+
+multi_hud.o:
+	g++ -c multiplayer/multi_hud.cpp -Wall
 
 
 

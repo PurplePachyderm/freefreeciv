@@ -4,6 +4,7 @@
 #include "../include/multiplayer/game_init.hpp"
 #include "../include/multiplayer/easywsclient.hpp"
 #include "../include/multiplayer/json.h"
+#include "../include/multiplayer/in_game.hpp"
 #include "../include/display/display.h"
 #include "../include/game/map.h"
 #include <json-c/json.h>
@@ -37,7 +38,7 @@ int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture){
      #endif
 
     //ws = WebSocket::from_url("ws://192.168.0.189:8080");
-    ws = WebSocket::from_url("ws://127.0.0.1:8080");
+    ws = WebSocket::from_url("ws://port-8080.freefreeciv-server-olivierworkk493832.codeanyapp.com");
     assert(ws);
 
     //Send pseudo
@@ -100,7 +101,7 @@ public:
 
 
         else{   //Update in the existing rooms
-            event event = parseEvent(&message[0]);
+            mEvent event = parseEvent(&message[0]);
 
             if(event.type == PLAYER_JOIN_ROOM){
                 (instance->rooms)[event.roomId].nPlayers++;
@@ -147,11 +148,8 @@ int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * t
 
     lobbyFunctor functor(&instance);
 
-    //Rooms request
-    char * request = (char *)malloc(13*sizeof(char));
-    sprintf(request, "roomsRequest");
-    ws->send(request);
-    free(request);
+    //Rooms request;
+    ws->send("roomsRequest");
 
     //Sets up callback function
     while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
@@ -243,9 +241,10 @@ class roomFunctor {
 
 
 int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture, room room, int roomId){
-    //Menu wwith all the current rooms avalaible
-    //Allows to join one of them (creation with the companion app)
+    //Waiting menu when a game have been joined
+
     int quit = 0;
+    int returnValue = 0;
 
     //Sending request of players and own infos
     mPlayer player;
@@ -254,7 +253,7 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
     coord target;
     target.x = -1;
     target.y = -1;
-    event eventJoinRoom = {PLAYER_JOIN_ROOM, roomId, -1, player, -1, target};
+    mEvent eventJoinRoom = {PLAYER_JOIN_ROOM, roomId, -1, player, -1, target};
 
 
     char * jString;
@@ -284,26 +283,26 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
         if(instance.readyToPlay){
             char * pseudo = readPseudo();
 
-            //If we're host
+            //If we're host, create game structure, then send to server
             if(strcat(pseudo, room.host) == 0){
+                //Get players/AI infos
                 int * AIs = (int*) malloc(room.nPlayers*sizeof(int));
 
                 for(int i=0; i<room.nPlayers; i++){
                     AIs[i] = room.players[i].isAIControlled;
                 }
 
-                struct game game;
-                genGame(&game, room.nPlayers, AIs);
+                genGame(&room.game, room.nPlayers, AIs);
 
                 //TODO Send to server
             }
-            //inGame(ws, ...);
+            returnValue = mMainHud(ws, room, renderer, texture, room.game);
             printf("Yeah =)\n");
         }
 
     }
 
-    return 0;
+    return returnValue;
 }
 
 

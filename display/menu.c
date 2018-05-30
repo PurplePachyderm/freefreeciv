@@ -136,6 +136,13 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 				refresh = 1;
 			}
 
+			//New local game
+			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= SCREEN_WIDTH/2 - localPlay->w/2 && event.button.x <= SCREEN_WIDTH/2 + localPlay->w/2
+			&& event.button.y >= 4*SCREEN_HEIGHT/8-((localPlay->h*fontFactor+1)/2) && event.button.y <= 4*SCREEN_HEIGHT/8-((localPlay->h*fontFactor+1)/2)+localPlay->h * fontFactor + 1){
+				quit = loadSaveMenu(renderer, texture);
+				refresh = 1;
+			}
 
 			//Quit game ("Quit" button)
 			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
@@ -492,6 +499,115 @@ int cycleSlot(int * slots, int slotId, int firstIteration){
 	}
 
 	return returnValue;
+}
+
+
+
+//***Load save system***
+int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture){
+
+	SDL_Event event;
+	int quit = 0;
+	int quitGame = 0;
+
+	//Font size and surface height are different, but we need to locate the actual text for hitboxes
+	float fontFactor = 0.655;
+
+	//Is 1 when we come back to this menu to refresh display only when needed
+	int refresh = 1;
+
+	char saveName [25];
+
+
+	//Surfaces
+	SDL_Rect srcRect;
+	SDL_Rect destRect;
+
+	SDL_Surface * background = NULL;
+	SDL_Surface * title = NULL;
+
+	SDL_Surface ** saves = NULL;
+	int nSaves = 3;
+	saves = (SDL_Surface**) malloc(3 * sizeof(SDL_Surface*));
+
+	SDL_Surface * pages = NULL;
+
+
+	struct game game;
+
+	while(!quit){
+        SDL_Delay(REFRESH_PERIOD);
+
+		if(refresh == 1){
+			//Frees previous surfaces before allocating the new ones
+			SDL_FreeSurface(background);
+			SDL_FreeSurface(title);
+
+			for(int i=0; i<nSaves; i++){
+				SDL_FreeSurface(saves[i]);
+			}
+
+			saves = (SDL_Surface**) malloc(nSaves * sizeof(SDL_Surface*));
+
+			SDL_FreeSurface(pages);
+
+
+			//Background
+			setRectangle(&srcRect, 0, 0, 3840, 2160); //Dim of background
+			setRectangle(&destRect, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+			background = IMG_Load("resources/menu.png");
+			SDL_Texture * backgroundTexture = SDL_CreateTextureFromSurface(renderer, background);
+			SDL_RenderCopy(renderer, backgroundTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(backgroundTexture);
+
+
+			//Title
+			TTF_Font * font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/8);
+			SDL_Color color = {255, 237, 43};
+
+			title = TTF_RenderText_Blended(font, "new game", color);
+			SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, title);
+
+			setRectangle(&srcRect, 0, title->h - (title->h*fontFactor+1), title->w, title->h * fontFactor);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - title->w/2, 3*SCREEN_HEIGHT/64, title->w, title->h * fontFactor);
+			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(textTexture);
+			TTF_CloseFont(font);
+
+			font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/16);
+
+			//Saves
+			for(int i=0; i<nSaves; i++){
+
+				sprintf(saveName, "Save [%d]", i);
+
+				saves[i] = TTF_RenderText_Blended(font, saveName, color);
+				textTexture = SDL_CreateTextureFromSurface(renderer, saves[i]);
+
+				setRectangle(&srcRect, 0, saves[i]->h - (saves[i]->h*fontFactor+1), saves[i]->w, saves[i]->h * fontFactor + 1);
+				setRectangle(&destRect, SCREEN_WIDTH/2 - saves[i]->w/2, (i+2)*SCREEN_HEIGHT/8-((saves[i]->h*fontFactor+1)/2), saves[i]->w, saves[i]->h * fontFactor + 1);
+				SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+				SDL_DestroyTexture(textTexture);
+			}
+
+			//Blocks refreshing
+			refresh = 0;
+			SDL_RenderPresent(renderer);
+		}
+
+		while(SDL_PollEvent(&event)){
+
+			if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
+				quit = 1;
+			}
+		}
+	}
+
+	return quitGame;
 }
 
 

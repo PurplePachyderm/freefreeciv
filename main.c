@@ -61,13 +61,13 @@ int main(int argc, char** argv){
 
 
 	//***** Multiplayer testing *****
-	//SDL_DestroyWindow(window);	//Delete after WS test
-	//wsConnectTest(string);
-	//wsConnect(renderer, texture);
+	// SDL_DestroyWindow(window);	//Delete after WS test
+	// wsConnectTest(string);
+	// wsConnect(renderer, texture);
 
 
 	//***** Main menu *****
-	mainMenu(renderer, texture);
+	//mainMenu(renderer, texture);
 
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);

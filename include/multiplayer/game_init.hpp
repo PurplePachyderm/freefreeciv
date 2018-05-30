@@ -19,9 +19,6 @@
 #define DESTROY_ROOM 14
 #define CONNECTION 15
 
-
-
-//isAIControlled codes
 #define AI 1
 #define PLAYER 2
 
@@ -37,6 +34,7 @@ typedef struct{
     mPlayer * players;
     char * host;
     struct game game;
+    int roomId;
 }room;
 
 typedef struct{
@@ -46,7 +44,7 @@ typedef struct{
     mPlayer playerInfos;
     int unitId;
     coord target;
-}event;
+}mEvent;
 
 
 int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture);

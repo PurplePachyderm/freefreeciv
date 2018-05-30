@@ -127,7 +127,9 @@ int moveUnit(struct game * game, int unitId, coord targetPos, coord ** path){
 
 
 
-void collect(struct game * game, int unitId, coord targetPos){
+int collect(struct game * game, int unitId, coord targetPos){
+    int returnValue = 0;
+
     int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
     int distY = abs(targetPos.y-game->players[game->currentPlayer].units[unitId].pos.y);
     int dist = distX+distY;
@@ -145,15 +147,19 @@ void collect(struct game * game, int unitId, coord targetPos){
                 }
 
                 game->players[game->currentPlayer].units[unitId].isBusy = 1;
+                returnValue = 1;
                 break;
             }
         }
     }
+    return returnValue;
 }
 
 
 
-void attack(struct game * game, int unitId, coord targetPos){
+int attack(struct game * game, int unitId, coord targetPos){
+    int returnValue = 0;
+
     int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
     int distY = abs(targetPos.y-game->players[game->currentPlayer].units[unitId].pos.y);
     int dist = distX+distY;
@@ -185,6 +191,7 @@ void attack(struct game * game, int unitId, coord targetPos){
                             game->players[i].nUnits--;
                             game->players[i].units = (unit*) realloc (game->players[i].units, game->players[i].nUnits * sizeof(unit));
                         }
+                        returnValue = 1;
                         break;
                     }
                 }
@@ -219,6 +226,7 @@ void attack(struct game * game, int unitId, coord targetPos){
 
                             free(game->players[i].buildings);
                             game->players[i].buildings = newBuildings;
+                            returnValue = 1;
                         }
 
 
@@ -230,6 +238,7 @@ void attack(struct game * game, int unitId, coord targetPos){
 
                             game->players[i].nUnits = 0;
                             game->players[i].nBuildings = 0;
+                            returnValue = 1;
 
                             break;
                         }
@@ -242,12 +251,15 @@ void attack(struct game * game, int unitId, coord targetPos){
             }//1   2   1
         }//1   3   3   1
     }//1   4   6   4   1
+    return returnValue;
 }//1   5   10  10  5   1
 // :p
 
 
 
-void createPeasant(struct game * game, coord pos, int cityId){
+int createPeasant(struct game * game, coord pos, int cityId){
+    int returnValue = 0;
+
     int distX = abs(game->players[game->currentPlayer].buildings[cityId].pos.x - pos.x);
     int distY = abs(game->players[game->currentPlayer].buildings[cityId].pos.y - pos.y);
     int dist = distX + distY;
@@ -261,12 +273,16 @@ void createPeasant(struct game * game, coord pos, int cityId){
         game->players[game->currentPlayer].buildings[cityId].isBusy = 1;
 
         game->players[game->currentPlayer].gold -= PEASANT_COST;
+        returnValue = 1;
     }
+    return returnValue;
 }
 
 
 
-void createSoldier(struct game * game, coord pos, int barrackId){
+int createSoldier(struct game * game, coord pos, int barrackId){
+    int returnValue = 0;
+
     int distX = abs(game->players[game->currentPlayer].buildings[barrackId].pos.x - pos.x);
     int distY = abs(game->players[game->currentPlayer].buildings[barrackId].pos.y - pos.y);
     int dist = distX + distY;
@@ -279,12 +295,16 @@ void createSoldier(struct game * game, coord pos, int barrackId){
         game->players[game->currentPlayer].buildings[barrackId].isBusy = 1;
 
         game->players[game->currentPlayer].gold -= SOLDIER_COST;   //Soldier Cost
+        returnValue = 1;
     }
+    return returnValue;
 }
 
 
 
-void createBarrack(struct game * game, coord pos, int peasantId){
+int createBarrack(struct game * game, coord pos, int peasantId){
+    int returnValue = 0;
+
     int distX = abs(game->players[game->currentPlayer].units[peasantId].pos.x - pos.x);
     int distY = abs(game->players[game->currentPlayer].units[peasantId].pos.y - pos.y);
     int dist = distX + distY;
@@ -297,5 +317,7 @@ void createBarrack(struct game * game, coord pos, int peasantId){
         game->players[game->currentPlayer].units[peasantId].isBusy = 1;
 
         game->players[game->currentPlayer].wood -= BARRACK_COST;
+        returnValue = 1;
     }
+    return returnValue;
 }
