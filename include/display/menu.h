@@ -9,4 +9,6 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture);
 int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture);
 int cycleSlot(int * slots, int slotId, int firstIteration);
 
+int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture);
+
 int inGameMenu(SDL_Renderer * renderer);
