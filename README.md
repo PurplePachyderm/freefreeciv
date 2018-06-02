@@ -3,7 +3,7 @@
 
 Server repository [here](https://github.com/Arveto/freefreeciv-server)
 
-Teasing: Companion app incoming...
+Companion app repository [here](https://github.com/Arveto/freefreeciv-companion)
 
 ### Dependencies: 
 
