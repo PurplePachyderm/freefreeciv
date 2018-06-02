@@ -742,14 +742,16 @@ public:
 	struct game * game;
 	SDL_Renderer * renderer;
 	SDL_Texture * texture;
-	struct view * camera;
-	int * quit
+	view * camera;
+	int * quit;
+	mEvent event;
 
-    void callbackInGame(const std::string & message, mEvent event, SDL_Renderer * renderer, SDL_Texture * texture, struct view * camera, int * quit){
+    void callbackInGame(const std::string & message, mEvent event, SDL_Renderer * renderer, SDL_Texture * texture, view * camera, int * quit){
 
         //Checking if game is starting
         json_object * json = json_tokener_parse(&message[0]);
         json_object * jType = json_object_object_get(json, "type");
+		int length;
 
         //If receiving a typed event
         if(jType != NULL){
@@ -760,15 +762,15 @@ public:
 			switch(type){
 				case M_MOVEMENT:
 					coord * path;
-					int length = moveUnit(game, event.unitId, event.target, &path);
+					length = moveUnit(game, event.unitId, event.target, &path);
 					if(length){
-						movementAnim(renderer, texture, camera, game, path, length, peasantId);
+						movementAnim(renderer, texture, camera, game, path, length, event.unitId);
 						free(path);
 					}
 					break;
 
 				case M_ATTACK:
-					attack(game, event.unit, event.target);
+					attack(game, event.unitId, event.target);
 					break;
 
 				case M_CREATE_PEASANT:
@@ -783,7 +785,7 @@ public:
 					collect(game, event.unitId, event.target);
 					break;
 
-				case END_TURN:
+				case M_END_TURN:
 				case PLAYER_LEAVE_GAME:
 				case PLAYER_LEAVE_ROOM:
 					//This will quit the foreignHud function
@@ -793,10 +795,6 @@ public:
 
         }
 
-        //Else, update players list
-        else
-            *nPlayers = parsePlayers(players, &message[0]);
-
     }
 };
 
@@ -805,16 +803,16 @@ class inGameFunctor {
   public:
       inGameIntermediary * instance;
 
-    roomFunctor(inGameIntermediary * instance) : instance(instance) {
+    inGameFunctor(inGameIntermediary * instance) : instance(instance) {
     }
     void operator()(const std::string& message) {
 		//TODO Set parameters properly
-        instance->callbackInGame(message, instance, game, rendere, texture, camera, quit);
+        instance->callbackInGame(message, instance->event, instance->renderer, instance->texture, instance->camera, instance->quit);
     }
 };
 
 
-
+//In this funcion, we can move the camera & access menu only. Game will check for updates coming from server
 int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
 	SDL_Event event;
 	int quit = 0;

@@ -67,7 +67,7 @@ int main(int argc, char** argv){
 
 
 	//***** Main menu *****
-	//mainMenu(renderer, texture);
+	mainMenu(renderer, texture);
 
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);

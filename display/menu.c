@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <dirent.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+
+#ifndef min
+	#define min( a, b ) ( ((a) < (b)) ? (a) : (b) )
+#endif
 
 #include "../include/display/menu.h"
 #include "../include/display/display.h"
 #include "../include/display/hud.h"
 #include "../include/game/map.h"
+#include "../include/game/save_system.h"
 
 
 	//***Main menu***
@@ -505,6 +511,8 @@ int cycleSlot(int * slots, int slotId, int firstIteration){
 
 //***Load save system***
 int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture){
+	//BUG Free of saves surfaces fucked up :p
+
 
 	SDL_Event event;
 	int quit = 0;
@@ -516,7 +524,11 @@ int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 	//Is 1 when we come back to this menu to refresh display only when needed
 	int refresh = 1;
 
-	char saveName [25];
+	//Getting saves
+	int nSaves = 0;
+	char ** savesNames = getSaves(&nSaves);
+
+	int currentPage = 0;
 
 
 	//Surfaces
@@ -527,10 +539,14 @@ int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 	SDL_Surface * title = NULL;
 
 	SDL_Surface ** saves = NULL;
-	int nSaves = 3;
-	saves = (SDL_Surface**) malloc(3 * sizeof(SDL_Surface*));
+	saves = (SDL_Surface**) malloc(nSaves * sizeof(SDL_Surface*));
 
-	SDL_Surface * pages = NULL;
+	for(int i=0; i<nSaves; i++){
+		saves[i] = NULL;
+	}
+
+	SDL_Surface * previous = NULL;
+	SDL_Surface * next = NULL;
 
 
 	struct game game;
@@ -543,13 +559,16 @@ int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			SDL_FreeSurface(background);
 			SDL_FreeSurface(title);
 
-			for(int i=0; i<nSaves; i++){
-				SDL_FreeSurface(saves[i]);
-			}
+			// for(int i=0; i<nSaves; i++){
+			// 	printf("Freeing save [%d]\n", i);
+			// 	SDL_FreeSurface(saves[i]);
+			// 	saves[i] = NULL;
+			// }
 
 			saves = (SDL_Surface**) malloc(nSaves * sizeof(SDL_Surface*));
 
-			SDL_FreeSurface(pages);
+			SDL_FreeSurface(previous);
+			SDL_FreeSurface(next);
 
 
 			//Background
@@ -567,7 +586,7 @@ int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			TTF_Font * font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/8);
 			SDL_Color color = {255, 237, 43};
 
-			title = TTF_RenderText_Blended(font, "new game", color);
+			title = TTF_RenderText_Blended(font, "load", color);
 			SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, title);
 
 			setRectangle(&srcRect, 0, title->h - (title->h*fontFactor+1), title->w, title->h * fontFactor);
@@ -580,19 +599,40 @@ int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/16);
 
 			//Saves
-			for(int i=0; i<nSaves; i++){
+			for(int i=5*currentPage; i<min(nSaves, 5*currentPage+5); i++){
 
-				sprintf(saveName, "Save [%d]", i);
-
-				saves[i] = TTF_RenderText_Blended(font, saveName, color);
+				saves[i] = TTF_RenderText_Blended(font, savesNames[i], color);
 				textTexture = SDL_CreateTextureFromSurface(renderer, saves[i]);
 
 				setRectangle(&srcRect, 0, saves[i]->h - (saves[i]->h*fontFactor+1), saves[i]->w, saves[i]->h * fontFactor + 1);
-				setRectangle(&destRect, SCREEN_WIDTH/2 - saves[i]->w/2, (i+2)*SCREEN_HEIGHT/8-((saves[i]->h*fontFactor+1)/2), saves[i]->w, saves[i]->h * fontFactor + 1);
+				setRectangle(&destRect, SCREEN_WIDTH/2 - saves[i]->w/2, ((i-5*currentPage)+2)*SCREEN_HEIGHT/8-((saves[i]->h*fontFactor+1)/2), saves[i]->w, saves[i]->h * fontFactor + 1);
 				SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
 				SDL_DestroyTexture(textTexture);
 			}
+
+			//Previous
+			previous = TTF_RenderText_Blended(font, "previous", color);
+			textTexture = SDL_CreateTextureFromSurface(renderer,previous);
+
+			setRectangle(&srcRect, 0, previous->h - (previous->h*fontFactor+1), previous->w, previous->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - previous->w/2 - SCREEN_WIDTH/4, 7*SCREEN_HEIGHT/8-((previous->h*fontFactor+1)/2), previous->w, previous->h * fontFactor + 1);
+			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(textTexture);
+
+			//Next
+			next = TTF_RenderText_Blended(font, "next", color);
+			textTexture = SDL_CreateTextureFromSurface(renderer,next);
+
+			setRectangle(&srcRect, 0, next->h - (next->h*fontFactor+1), next->w, next->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - next->w/2 + SCREEN_WIDTH/4, 7*SCREEN_HEIGHT/8-((next->h*fontFactor+1)/2), next->w, next->h * fontFactor + 1);
+			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(textTexture);
+			TTF_CloseFont(font);
+
+
 
 			//Blocks refreshing
 			refresh = 0;
@@ -604,12 +644,104 @@ int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
 				quit = 1;
 			}
+
+			//Click on save
+			for(int i=5*currentPage; i<min(nSaves, 5*currentPage+5); i++){
+				if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+				&& event.button.x >= SCREEN_WIDTH/2 - saves[i]->w/2 && event.button.x <= SCREEN_WIDTH/2 + saves[i]->w/2
+				&& event.button.y >= ((i-5*currentPage)+2)*SCREEN_HEIGHT/8-((saves[i]->h*fontFactor+1)/2) && event.button.y <= ((i-5*currentPage)+2)*SCREEN_HEIGHT/8-((saves[i]->h*fontFactor+1)/2)+saves[i]->h * fontFactor + 1){
+					printf("Clicked save [%d]\n", i);
+					loadSave(savesNames[i], &game);
+					quit = mainHud(renderer, texture, game);
+					refresh = 1;
+
+					break;
+				}
+
+			}
+
+			//Click on previous button
+			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >=  SCREEN_WIDTH/2 - previous->w/2 - SCREEN_WIDTH/4 && event.button.x <= SCREEN_WIDTH/2 - SCREEN_WIDTH/4 + previous->w
+			&& event.button.y >=  7*SCREEN_HEIGHT/8-((previous->h*fontFactor+1)/2) && event.button.y <= (7*SCREEN_HEIGHT/8-((previous->h*fontFactor+1)/2) + previous->h * fontFactor) ){
+				if(currentPage > 0){
+
+					for(int i=5*currentPage; i<min(5*currentPage+5, nSaves); i++){
+						SDL_FreeSurface(saves[i]);
+						saves[i] = NULL;
+					}
+
+					currentPage--;
+					refresh = 1;
+				}
+			}
+
+			//Click on next button
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >=  SCREEN_WIDTH/2 - next->w/2 + SCREEN_WIDTH/4 && event.button.x <= SCREEN_WIDTH/2 + SCREEN_WIDTH/4 + next->w
+			&& event.button.y >=  7*SCREEN_HEIGHT/8-((next->h*fontFactor+1)/2) && event.button.y <= (7*SCREEN_HEIGHT/8-((next->h*fontFactor+1)/2) + next->h * fontFactor) ){
+
+				if((currentPage+2)*5 > nSaves && (currentPage+1)*5 < nSaves){
+
+					for(int i=5*currentPage; i<min(5*currentPage+5, nSaves); i++){
+						SDL_FreeSurface(saves[i]);
+						saves[i] = NULL;
+					}
+
+					currentPage++;
+					refresh = 1;
+				}
+			}
+
 		}
 	}
+
+	for(int i=0 ; i<nSaves; i++){
+		free(savesNames[i]);
+	}
+	free(savesNames);
 
 	return quitGame;
 }
 
+
+
+char ** getSaves(int * nSaves){
+	//Reads all files in the saves menu
+
+	*nSaves = 0;
+	struct dirent *de;  // Pointer for directory entry
+	DIR * dr = opendir("./saves");
+
+
+	while ((de = readdir(dr)) != NULL){
+		//We check if we're not on the . and .. directories
+		if(strcmp(".", de->d_name) != 0 && strcmp("..", de->d_name) != 0){
+			(*nSaves)++;
+		}
+	}
+
+	//Allocs names list with the good size
+	char ** savesNames = (char **) malloc(*nSaves * sizeof(char*));
+
+	//Re-inits dir
+	closedir(dr);
+	dr = opendir("./saves");
+
+	int i=0;
+
+	while ((de = readdir(dr)) != NULL){
+		if(strcmp(".", de->d_name) != 0 && strcmp("..", de->d_name) != 0){
+			savesNames[i] = (char*) malloc(strlen(de->d_name) * sizeof(char));
+			strcpy(savesNames[i], de->d_name);	//Copy name removing the .json extension
+			savesNames[i][strlen(savesNames[i])-5] = 0;
+			i++;
+		}
+	}
+
+	closedir(dr);
+	return savesNames;
+}
 
 
 //***Menu HUD (Quit game, load & save)***
