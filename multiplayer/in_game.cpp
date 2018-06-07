@@ -110,7 +110,7 @@ int mPlayerHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer,
 
             switch(newEvent){
                 case MENU:
-                    quitGame = inGameMenu(renderer);
+                    quitGame = inGameMenu(renderer, *game);
 					if(quitGame)
 						quit = QUIT_HUD;
 
@@ -212,7 +212,7 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer);
+				quitGame = inGameMenu(renderer, *game);
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -430,7 +430,7 @@ int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer);
+				quitGame = inGameMenu(renderer, *game);
 				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
@@ -597,7 +597,7 @@ int mBuildingHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * rendere
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer);
+				quitGame = inGameMenu(renderer, *game);
 				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
@@ -844,7 +844,7 @@ int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * rende
 
             switch(newEvent){
                 case MENU:
-                    quitGame = inGameMenu(renderer);
+                    quitGame = inGameMenu(renderer, *game);
 					if(quitGame)
 						quit = QUIT_HUD;
 

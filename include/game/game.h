@@ -110,3 +110,5 @@ int checkForeignBuilding(struct game game, coord pos, int * ownerId);
 int checkForeignUnit(struct game game, coord pos, int * ownerId);
 
 void busyReset(struct game * game);
+
+void freeGame(struct game * game);

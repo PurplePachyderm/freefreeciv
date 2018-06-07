@@ -105,7 +105,7 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 
             switch(newEvent){
                 case MENU:
-                    quitGame = inGameMenu(renderer);
+                    quitGame = inGameMenu(renderer, *game);
 					if(quitGame)
 						quit = QUIT_HUD;
 
@@ -281,7 +281,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer);
+				quitGame = inGameMenu(renderer, *game);
 				camera->leftClick = 0;
 				if(quitGame)
 					quit = 1;
@@ -451,7 +451,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer);
+				quitGame = inGameMenu(renderer, *game);
 				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
@@ -594,7 +594,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer);
+				quitGame = inGameMenu(renderer, *game);
 				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)
@@ -729,7 +729,7 @@ int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer);
+				quitGame = inGameMenu(renderer, *game);
 				camera->leftClick = 0;
 				if(quitGame == QUIT_PROGRAM || quitGame == QUIT_GAME){
 					quit = quitGame;
@@ -845,7 +845,7 @@ int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 			//Menu
 			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer);
+				quitGame = inGameMenu(renderer, *game);
 				quit = quitGame;
 				camera->leftClick = 0;
 				if(quitGame)

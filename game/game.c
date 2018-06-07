@@ -131,3 +131,18 @@ void busyReset(struct game * game){
         }
     }
 }
+
+
+
+void freeGame(struct game * game){
+    //Free tokens/players
+    for(int i=0; i<game->nPlayers; i++){
+        free(game->players[i].units);
+        free(game->players[i].buildings);
+    }
+
+    free(game->players);
+
+    //Free map
+    free(game->map.resources);
+}
