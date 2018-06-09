@@ -40,32 +40,6 @@ int main(int argc, char** argv){
 
 	TTF_Init();
 
-
-	//***** Solo play *****
-	// 	//Game init
-	// struct game game;
-	//
-	// //loadSave("test", &game);
-	//
-	// int nPlayers = 4;
-	// int * isAIControlled = (int*) malloc (4*sizeof(int));
-	// //Switch one of those to 0 to add players
-	// isAIControlled[0] = 0;
-	// isAIControlled[1] = 1;
-	// isAIControlled[2] = 1;
-	// isAIControlled[3] = 1;
-	// genGame(&game, nPlayers, isAIControlled);
-	//
-	// 	//Main menu (game hud for now)
-	// mainHud(renderer, texture, game);
-
-
-	//***** Multiplayer testing *****
-	// SDL_DestroyWindow(window);	//Delete after WS test
-	// wsConnectTest(string);
-	// wsConnect(renderer, texture);
-
-
 	//***** Main menu *****
 	mainMenu(renderer, texture);
 

@@ -32,6 +32,9 @@
 
 //Main HUD (Main game function, sets everything to default state)
 int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
+	printf("Entering mMainHud\n");
+	printf("game.players[0].units[0].pos.x = %d\n", game.players[2].units[0].pos.x);
+
 	int quit = 0;
 	view camera;
     camera.offset.x = (SCREEN_WIDTH - (MAP_SIZE+2)*TILE_SIZE) / 2;	//Centers map
@@ -39,19 +42,24 @@ int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, S
     camera.zoom = 1;
     camera.leftClick = 0;
 
+	printf("1\n");
+
 	int quitGame = 0;
 
-	char * pseudo = readPseudo();
+
+	printf("2\n");
 
 	game.currentPlayer--;	//To start at player 1, or current player if game already started
-	while(!quit){
+	while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
 		game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
 		busyReset(&game); //Resets units
+		printf("3\n");
 
 		if(game.players[game.currentPlayer].nBuildings > 0){	//Player has not lost
-
-			if(strcmp(pseudo, room.players[game.currentPlayer].pseudo)){	//If it's our client
+			printf("3.5\n");
+			if(strcmp(readPseudo(), room.players[game.currentPlayer].pseudo) == 0){	//If it's our client
 				//Trigger the "playing" function
+				printf("4\n");
 				quitGame = mPlayerHud(ws, room, renderer, texture, &game, &camera);
 
 				if(quitGame)
@@ -60,18 +68,19 @@ int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, S
 
 			else if(!room.players[game.currentPlayer].isAIControlled){	//Other client
 				//Trigger the "spectate function"
-				quitGame = mEnemyPlayerHud(ws, room, renderer, texture, &room.game, &camera);
+				printf("5\n");
+				quitGame = mEnemyPlayerHud(ws, room, renderer, texture, &(game), &camera);
 			}
 
 			else{	//AI
 				//Trigger the AI function
+				printf("6\n");
 				AIHud(renderer, texture, &game, &camera);
 				camera.leftClick = 0;	//Stays at 1 after clicking on next turn button
 			}
 		}
 	}
-
-	ws->send("PLAYER_LEAVE_GAME");
+	printf("7\n");
 
 	return quitGame;
 }
@@ -812,26 +821,42 @@ class inGameFunctor {
 };
 
 
+
 //In this funcion, we can move the camera & access menu only. Game will check for updates coming from server
 int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
+	printf("Welcome to mEnemyPlayerHud!!\n");
+
 	SDL_Event event;
 	int quit = 0;
 	int newEvent = 0;
 
 	coord selectedTile;
-	int tokenId;
 
 	int countdown = TURN_TIME * 1000;	//30 sec in ms
 	int countdownSec = TURN_TIME; //Approx in sec for display
 
 	int quitGame = 0;
 
+	inGameIntermediary instance;
+	instance.game = game;
+	instance.renderer = renderer;
+	instance.texture = texture;
+	instance.camera = camera;
+	instance.quit = &quit;
+
+	inGameFunctor functor(&instance);
+
 	//First display before any event
+	printf("About to display\n");
+	//XXXFucking bus error
 	mMainDisplay(renderer, texture, *game, *camera, countdownSec);
+	printf("First display done\n");
 
 
     while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
-        SDL_Delay(REFRESH_PERIOD);
+		ws->poll();
+		SDL_Delay(REFRESH_PERIOD);
+		ws->dispatch(functor);
 
         while(SDL_PollEvent(&event)){
             newEvent = events(event, camera, *game, &selectedTile);

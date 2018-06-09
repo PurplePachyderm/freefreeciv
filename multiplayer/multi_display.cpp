@@ -19,6 +19,7 @@ void mBasicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game g
 	//Warning: Does not include RenderPresent
 	//Renders map, player indicator, countdown,
 
+	printf("BAsic display\n");
 	float fontFactor = 0.9;	//Font opening size and surface size are different
 	SDL_Rect srcRect;
 	SDL_Rect destRect;
@@ -128,7 +129,7 @@ void mBasicDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game g
 //Huds
 void mMainDisplay(SDL_Renderer * renderer, SDL_Texture * texture, struct game game, view camera, int countdown, char * pseudo){
 	//Best function ever
-
+	printf("About to mBasicDisplay\n");
 	mBasicDisplay(renderer, texture, game, camera, countdown, 1, pseudo);
 	SDL_RenderPresent(renderer);
 }

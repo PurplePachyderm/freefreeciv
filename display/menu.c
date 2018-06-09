@@ -6,16 +6,21 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
-#ifndef min
-	#define min( a, b ) ( ((a) < (b)) ? (a) : (b) )
-	#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
-#endif
+
+// #ifndef min
+// 	#define min( a, b ) ( ((a) < (b)) ? (a) : (b) )
+// 	#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
+// #endif
+
+int min (int a, int b){ if(a<b) return a; else return b; }
+int max (int a, int b){ if(a>b) return a; else return b; }
 
 #include "../include/display/menu.h"
 #include "../include/display/display.h"
 #include "../include/display/hud.h"
 #include "../include/game/map.h"
 #include "../include/game/save_system.h"
+#include "../include/multiplayer/game_init.hpp"
 
 
 	//***Main menu***
@@ -152,6 +157,14 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			&& event.button.x >= SCREEN_WIDTH/2 - localPlay->w/2 && event.button.x <= SCREEN_WIDTH/2 + localPlay->w/2
 			&& event.button.y >= 4*SCREEN_HEIGHT/8-((localPlay->h*fontFactor+1)/2) && event.button.y <= 4*SCREEN_HEIGHT/8-((localPlay->h*fontFactor+1)/2)+localPlay->h * fontFactor + 1){
 				quit = loadSaveMenu(renderer, texture, &game);
+				refresh = 1;
+			}
+
+			//Multiplayer
+			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >= SCREEN_WIDTH/2 - multiplayer->w/2 && event.button.x <= SCREEN_WIDTH/2 + multiplayer->w/2
+			&& event.button.y >= 5*SCREEN_HEIGHT/8-((multiplayer->h*fontFactor+1)/2) && event.button.y <= 5*SCREEN_HEIGHT/8-((multiplayer->h*fontFactor+1)/2)+multiplayer->h * fontFactor + 1){
+				quit = wsConnect(renderer, texture);
 				refresh = 1;
 			}
 
@@ -652,7 +665,6 @@ int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture, struct game * g
 
 					break;
 				}
-
 			}
 
 			//Click on previous button
