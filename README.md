@@ -12,7 +12,7 @@ Companion app repository [here](https://github.com/Arveto/freefreeciv-companion)
 [SDL_ttf](https://www.libsdl.org/projects/SDL_ttf/),
 [json-c](https://github.com/json-c/json-c)
 
-FFC is also including the [easywsclient](https://github.com/dhbaird/easywsclient) library released under MIT license
+FFC is also including the [easywsclient](https://github.com/dhbaird/easywsclient) and the [QR Code generator C++](https://www.nayuki.io/page/qr-code-generator-library) libraries released under MIT license
 
 ### Credits
 #### Sprites
