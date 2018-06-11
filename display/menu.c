@@ -5,6 +5,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 
 
 // #ifndef min
@@ -27,6 +28,10 @@ int max (int a, int b){ if(a>b) return a; else return b; }
 void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 	SDL_Event event;
 	int quit = 0;
+
+	Mix_Music * music = NULL;
+	music = Mix_LoadMUS("resources/kazoo.mp3");
+	Mix_PlayMusic( music, -1);
 
 	//Font size and surface height are different, but we need to locate the actual text for hitboxes
 	float fontFactor = 0.655;
@@ -148,34 +153,48 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x >= SCREEN_WIDTH/2 - localPlay->w/2 && event.button.x <= SCREEN_WIDTH/2 + localPlay->w/2
 			&& event.button.y >= 3*SCREEN_HEIGHT/8-((localPlay->h*fontFactor+1)/2) && event.button.y <= 3*SCREEN_HEIGHT/8-((localPlay->h*fontFactor+1)/2)+localPlay->h * fontFactor + 1){
-				quit = newGameMenu(renderer, texture);
+				quit = newGameMenu(renderer, texture, music);
 				refresh = 1;
+
+				music = Mix_LoadMUS("resources/kazoo.mp3");
+				Mix_PlayMusic( music, -1);
 			}
 
-			//New local game
+			//Load game
 			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x >= SCREEN_WIDTH/2 - localPlay->w/2 && event.button.x <= SCREEN_WIDTH/2 + localPlay->w/2
 			&& event.button.y >= 4*SCREEN_HEIGHT/8-((localPlay->h*fontFactor+1)/2) && event.button.y <= 4*SCREEN_HEIGHT/8-((localPlay->h*fontFactor+1)/2)+localPlay->h * fontFactor + 1){
-				quit = loadSaveMenu(renderer, texture, &game);
+				quit = loadSaveMenu(renderer, texture, music, &game);
 				refresh = 1;
+
+				music = Mix_LoadMUS("resources/kazoo.mp3");
+				Mix_PlayMusic( music, -1);
 			}
 
 			//Multiplayer
 			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x >= SCREEN_WIDTH/2 - multiplayer->w/2 && event.button.x <= SCREEN_WIDTH/2 + multiplayer->w/2
 			&& event.button.y >= 5*SCREEN_HEIGHT/8-((multiplayer->h*fontFactor+1)/2) && event.button.y <= 5*SCREEN_HEIGHT/8-((multiplayer->h*fontFactor+1)/2)+multiplayer->h * fontFactor + 1){
-				quit = wsConnect(renderer, texture);
+				Mix_FreeMusic(music);
+				music = NULL;
+
+				quit = wsConnect(renderer, texture, music);
 				refresh = 1;
+
+				music = Mix_LoadMUS("resources/kazoo.mp3");
+				Mix_PlayMusic( music, -1);
 			}
 
 			//Quit game ("Quit" button)
-			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+		if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x >= SCREEN_WIDTH/2 - sQuit->w/2 && event.button.x <= SCREEN_WIDTH/2 + sQuit->w/2
 			&& event.button.y >= 6*SCREEN_HEIGHT/8-((sQuit->h*fontFactor+1)/2) && event.button.y <= 6*SCREEN_HEIGHT/8-((sQuit->h*fontFactor+1)/2)+sQuit->h * fontFactor + 1){
 				quit = 1;
 			}
 		}
 	}
+
+	Mix_FreeMusic(music);
 
 	SDL_FreeSurface(background);
 	SDL_FreeSurface(title);
@@ -189,7 +208,7 @@ void mainMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 
 
 	//***New game menu***
-int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture){
+int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture, Mix_Music * music){
 
 	SDL_Event event;
 	int quit = 0;
@@ -452,8 +471,9 @@ int newGameMenu(SDL_Renderer * renderer, SDL_Texture * texture){
 					}
 				}
 
-				genGame(&game, nPlayers, isAIControlled);
+				Mix_FreeMusic(music);
 
+				genGame(&game, nPlayers, isAIControlled);
 				mainHud(renderer, texture, game);
 				quit = 1;
 			}
@@ -528,7 +548,7 @@ int cycleSlot(int * slots, int slotId, int firstIteration){
 
 
 //***Save system***
-int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game){
+int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture, Mix_Music * music, struct game * game){
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;
@@ -660,6 +680,7 @@ int loadSaveMenu(SDL_Renderer * renderer, SDL_Texture * texture, struct game * g
 				&& event.button.y >= ((i-5*currentPage)+2)*SCREEN_HEIGHT/8-((saves[i]->h*fontFactor+1)/2) && event.button.y <= ((i-5*currentPage)+2)*SCREEN_HEIGHT/8-((saves[i]->h*fontFactor+1)/2)+saves[i]->h * fontFactor + 1){
 					freeGame(game);
 					loadSave(savesNames[i], game);
+					Mix_FreeMusic(music);
 					quit = mainHud(renderer, texture, *game);
 					refresh = 1;
 
@@ -896,6 +917,11 @@ int inGameMenu(SDL_Renderer * renderer, struct game game){
     int quit = 0;
     int exitGame = 0; //Return value
 
+	Mix_Music * music = NULL;
+	music = Mix_LoadMUS("resources/8bit.mp3");
+	Mix_PlayMusic(music, -1);
+
+
     //Font size and surface height are different, but we need to locate the actual text for hitboxes
     float fontFactor = 0.655;
 
@@ -989,6 +1015,8 @@ int inGameMenu(SDL_Renderer * renderer, struct game game){
         }
     }
 
+	Mix_FreeMusic(music);
+
 	//Needed for hitboxes so freed at end of function
 	SDL_FreeSurface(background);
 	SDL_FreeSurface(title);
@@ -996,4 +1024,35 @@ int inGameMenu(SDL_Renderer * renderer, struct game game){
 	SDL_FreeSurface(quitGame);
 
     return exitGame;
+}
+
+void splashScreen(SDL_Renderer * renderer){
+
+	SDL_Rect srcRect;
+	SDL_Rect destRect;
+
+
+	SDL_Surface * splash1 = IMG_Load("resources/splash_screen.jpg");
+	SDL_Surface * splash2 = IMG_Load("resources/splash_screen2.jpg");
+
+	setRectangle(&srcRect, 0, 0, 1280, 720); //Dim of background
+	setRectangle(&destRect, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	SDL_Texture * backgroundTexture = SDL_CreateTextureFromSurface(renderer, splash1);
+	SDL_RenderCopy(renderer, backgroundTexture, &srcRect, &destRect);
+	SDL_RenderPresent(renderer);
+	SDL_DestroyTexture(backgroundTexture);
+
+	SDL_Delay(3000);
+
+	setRectangle(&srcRect, 0, 0, 1920, 1080); //Dim of background
+	setRectangle(&destRect, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+	backgroundTexture = SDL_CreateTextureFromSurface(renderer, splash2);
+	SDL_RenderCopy(renderer, backgroundTexture, &srcRect, &destRect);
+	SDL_RenderPresent(renderer);
+	SDL_DestroyTexture(backgroundTexture);
+
+	SDL_Delay(3000);
+
+	SDL_FreeSurface(splash1);
+	SDL_FreeSurface(splash2);
 }

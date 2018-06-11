@@ -1,6 +1,7 @@
 #pragma once
 #include "../game/game.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include "easywsclient.hpp"
 
 //Events codes
@@ -21,6 +22,8 @@
 
 #define AI 1
 #define PLAYER 2
+
+#define SERVER_ADRRESS "ws://127.0.0.1:8080"
 
 typedef struct{
     char * pseudo;
@@ -47,8 +50,9 @@ typedef struct{
 }mEvent;
 
 
-int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture);
+int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture, Mix_Music * music);
 
-int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture);
-int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture, room room, int roomId);
+int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture, Mix_Music * music);
+int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture, room room, int roomId, Mix_Music * music);
 char * readPseudo();
+int createPseudo(SDL_Renderer * renderer);

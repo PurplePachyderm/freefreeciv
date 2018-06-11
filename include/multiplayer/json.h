@@ -4,7 +4,7 @@
 
 int parseRooms(room ** rooms, const char * jString);
 
-int parsePlayers(mPlayer ** players, const char * jString);
+int parsePlayers(mPlayer ** players, char ** host, const char * jString);
 char * serializePlayerSelf(char * pseudo, int nPlayers, int roomId);
 
 mEvent parseEvent(const char * jString);

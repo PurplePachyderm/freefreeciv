@@ -35,6 +35,7 @@ int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, S
 	printf("Entering mMainHud\n");
 	printf("game.players[0].units[0].pos.x = %d\n", game.players[2].units[0].pos.x);
 
+
 	int quit = 0;
 	view camera;
     camera.offset.x = (SCREEN_WIDTH - (MAP_SIZE+2)*TILE_SIZE) / 2;	//Centers map
@@ -256,6 +257,7 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
+					ws->poll();
 					free(jString);
 
 					target.x = 0;
@@ -286,6 +288,7 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
+					ws->poll();
 					free(jString);
 				}
 			}
@@ -313,6 +316,7 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
+					ws->poll();
 					free(jString);
 				}
 			}
@@ -340,6 +344,7 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
+					ws->poll();
 					free(jString);
 				}
 			}
@@ -475,6 +480,7 @@ int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
+					ws->poll();
 					free(jString);
 
 					target.x = 0;
@@ -504,6 +510,7 @@ int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
+					ws->poll();
 					free(jString);
 				}
 			}
@@ -644,6 +651,7 @@ int mBuildingHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * rendere
 							jString = serializeEvent(sendedEvent);
 
 							ws->send(jString);
+							ws->poll();
 							free(jString);
 						}
 

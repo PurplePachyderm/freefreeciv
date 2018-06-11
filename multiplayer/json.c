@@ -66,7 +66,7 @@ int parseRooms(room ** rooms, const char * jString){
 
 
 
-int parsePlayers(mPlayer ** players, const char * jString){
+int parsePlayers(mPlayer ** players, char ** host, const char * jString){
     //Retrieves all the players and ther infos in a room
 
     json_object * json = json_tokener_parse(jString);
@@ -102,6 +102,12 @@ int parsePlayers(mPlayer ** players, const char * jString){
         json_object * jSlot = json_object_object_get(jPlayer, "slot");
         (*players)[i].slot = json_object_get_int(jSlot);
         free(jSlot);
+
+        //Get host
+        *host = (char*) malloc(100*sizeof(char));
+        json_object * jHost = json_object_object_get(json, "host");
+        sprintf(*host, json_object_get_string(jHost));
+        free(jHost);
 
 
         free(jPlayer);
@@ -493,7 +499,7 @@ void serializeGameStart(char jString [2000], struct game game, int roomId){
     json_object * jMsg = json_object_new_object();
 
 
-    json_object_object_add(jMsg, "Ttpe", jType);
+    json_object_object_add(jMsg, "type", jType);
     json_object_object_add(jMsg, "roomId", jRoomId);
     json_object_object_add(jMsg, "game", jGame);
 

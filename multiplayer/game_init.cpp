@@ -5,6 +5,7 @@
 #include "../include/multiplayer/easywsclient.hpp"
 #include "../include/multiplayer/json.h"
 #include "../include/multiplayer/in_game.hpp"
+#include "../include/multiplayer/QrCode.hpp"
 #include "../include/display/display.h"
 #include "../include/game/map.h"
 #include "../include/display/menu.h"
@@ -14,6 +15,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 
 #ifdef _WIN32
 #pragma comment( lib, "ws2_32" )
@@ -28,7 +30,7 @@
 #endif
 
 
-int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture){
+int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture, Mix_Music * music){
     //Initializes connexion with the server and calls the lobby
 
     int exitCode = 0;
@@ -47,37 +49,49 @@ int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture){
          }
      #endif
 
-    ws = WebSocket::from_url("ws://127.0.0.1:8080");
-    //ws = WebSocket::from_url("ws://port-8080.freefreeciv-server-olivierworkk493832.codeanyapp.com");
-    assert(ws);
+	 int quit = 0;
 
-    //Send pseudo
-    char * pseudo = readPseudo();
+	 //Check existence of pseudo
+	 if(strcmp(readPseudo(), "") == 0){
+		 quit = createPseudo(renderer);
+	 }
 
-    char * jsonString = (char *) malloc(100 * sizeof(char));
-    json_object * json = json_object_new_object();
+	 if(!quit){
+	    ws = WebSocket::from_url(SERVER_ADRRESS);
+	    //ws = WebSocket::from_url("ws://port-8080.freefreeciv-server-olivierworkk493832.codeanyapp.com");
+	    assert(ws);
 
-    json_object * jEventType = json_object_new_int(CONNECTION);
-    json_object * jPseudo = json_object_new_string(readPseudo());  //Hardcoded Pseudo for testing
+	    //Send pseudo
+	    char * pseudo = readPseudo();
 
-    json_object_object_add(json, "eventType", jEventType);
-    json_object_object_add(json, "pseudo", jPseudo);
+	    char * jsonString = (char *) malloc(100 * sizeof(char));
+	    json_object * json = json_object_new_object();
 
-    sprintf(jsonString, json_object_to_json_string(json));
-    json_object_put(json);
+	    json_object * jEventType = json_object_new_int(CONNECTION);
+	    json_object * jPseudo = json_object_new_string(readPseudo());  //Hardcoded Pseudo for testing
 
-    ws->send(jsonString);
-    free(jsonString);
-    free(pseudo);
+	    json_object_object_add(json, "eventType", jEventType);
+	    json_object_object_add(json, "pseudo", jPseudo);
+
+	    sprintf(jsonString, json_object_to_json_string(json));
+	    json_object_put(json);
+
+	    ws->send(jsonString);
+	    free(jsonString);
+	    free(pseudo);
+
+		ws->poll();
+		//ws->dispatch(functor);
 
 
-    //Lobby
-    lobby(ws, renderer, texture);
+	    //Lobby
+	    lobby(ws, renderer, texture, music);
+	}
 
-    delete ws;
-    #ifdef _WIN32
-         WSACleanup();
-    #endif
+	    delete ws;
+	    #ifdef _WIN32
+	         WSACleanup();
+	    #endif
     return exitCode;
 }
 
@@ -92,7 +106,6 @@ public:
     char * pseudo;
 
     void callbackLobby(const std::string & message, lobbyIntermediary * instance){
-
         //Checks if room list is sent
         int newNRooms = parseRooms(&(instance->rooms), &message[0]);
 
@@ -137,8 +150,10 @@ class lobbyFunctor {
 
 
 
-int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture){
-    //Menu wwith all the current rooms avalaible
+int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture, Mix_Music * music){
+	using easywsclient::WebSocket;
+
+	//Menu wwith all the current rooms avalaible
     //Allows to join one of them (creation with the companion app)
     int quit = 0;
     int quitGame = 0;
@@ -165,6 +180,7 @@ int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * t
 
     SDL_Surface * previous = NULL;
     SDL_Surface * next = NULL;
+	SDL_Surface * mobile = NULL;
 
     char currentGame[100];
 
@@ -181,6 +197,8 @@ int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * t
 
     //Rooms request;
     ws->send("roomsRequest");
+
+	ws->poll();
 
     //Sets up callback function
     while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
@@ -203,6 +221,7 @@ int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * t
 
             SDL_FreeSurface(previous);
             SDL_FreeSurface(next);
+			SDL_FreeSurface(mobile);
 
 
             //Background
@@ -265,7 +284,17 @@ int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * t
             SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
 
             SDL_DestroyTexture(textTexture);
-            TTF_CloseFont(font);
+
+			//Mobile login
+			mobile = TTF_RenderText_Blended(font, "companion", color);
+			textTexture = SDL_CreateTextureFromSurface(renderer, mobile);
+
+			setRectangle(&srcRect, 0, mobile->h - mobile->h*fontFactor+1, mobile->w, mobile->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - mobile->w/2, 7*SCREEN_HEIGHT/8-((mobile->h*fontFactor+1)/2), mobile->w, mobile->h * fontFactor + 1);
+			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(textTexture);
+			TTF_CloseFont(font);
 
 
 
@@ -304,9 +333,18 @@ int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * t
 				&& eventSDL.button.x >= SCREEN_WIDTH/2 - games[i]->w/2 && eventSDL.button.x <= SCREEN_WIDTH/2 + games[i]->w/2
 				&& eventSDL.button.y >= ((i-5*currentPage)+2)*SCREEN_HEIGHT/8-((games[i]->h*fontFactor+1)/2) && eventSDL.button.y <= ((i-5*currentPage)+2)*SCREEN_HEIGHT/8-((games[i]->h*fontFactor+1)/2)+games[i]->h * fontFactor + 1){
 					instance.roomToJoin = instance.rooms[i].roomId;
-					quit = roomFunction(ws, renderer, texture, instance.rooms[i], instance.roomToJoin);
+					quit = roomFunction(ws, renderer, texture, instance.rooms[i], instance.roomToJoin, music);
 					break;
 				}
+
+			}
+
+			//Click on mobile login
+			if(eventSDL.type == SDL_MOUSEBUTTONDOWN && eventSDL.button.button == SDL_BUTTON_LEFT
+			&& eventSDL.button.x >= SCREEN_WIDTH/2 - mobile->w/2 && eventSDL.button.x <= SCREEN_WIDTH/2 + mobile->w/2
+			&& eventSDL.button.y >= 7*SCREEN_HEIGHT/8-((mobile->h*fontFactor+1)/2) && eventSDL.button.y <= 7*SCREEN_HEIGHT/8-((mobile->h*fontFactor+1)/2)+mobile->h * fontFactor){
+				displayQRLogin(renderer);
+				break;
 			}
 		}
 
@@ -332,6 +370,10 @@ int lobby(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * t
 
     SDL_FreeSurface(previous);
     SDL_FreeSurface(next);
+	SDL_FreeSurface(mobile);
+
+	// Mix_FreeMusic(music);
+	// music = NULL;
 
     return quitGame;
 }
@@ -347,9 +389,10 @@ public:
 	int slots [4];
 	int roomId;
 	struct game game;
+	char * host;
 
     void callbackRoom(const std::string & message, mPlayer ** players, int * nPlayers,
-	int *readyToPlay, int (* slots) [4], int roomId, struct game * game){
+	int *readyToPlay, int (* slots) [4], int roomId, struct game * game, char ** host){
 
         //Checking if game is starting
         json_object * json = json_tokener_parse(&message[0]);
@@ -364,6 +407,7 @@ public:
 
 			//If it is OUR game start event
             if(event.type == GAME_START && event.roomId == roomId){
+				printf("Detected a game start\n");
                 *readyToPlay = 1;
 
 				//Filling game structure before starting game
@@ -379,16 +423,22 @@ public:
 
 			//First we check that it is our room
 			if(roomId == newRoomId){
+				printf("callback room > That's our room udate =)\n");
 
 				//Free pseudos
 				for(int i=0; i<*nPlayers; i++){
 					free((*players)[i].pseudo);
+					(*players)[i].pseudo = NULL;
 				}
 
 				free(*players);
+				*players = NULL;
 
 				//Players get reallocated
-				*nPlayers = parsePlayers(players, &message[0]);
+				free(*host);
+				*host = NULL;
+				*nPlayers = parsePlayers(players, &host[0], &message[0]);
+
 
 				//Re init slots
 				for(int i=0; i<4; i++){
@@ -417,15 +467,15 @@ class roomFunctor {
     }
     void operator()(const std::string& message) {
         instance->callbackRoom(message, &(instance->players), &(instance->nPlayers),
-		&(instance->readyToPlay), &(instance->slots), instance->roomId, &(instance->game) );
+		&(instance->readyToPlay), &(instance->slots), instance->roomId, &(instance->game), &(instance->host) );
     }
 };
 
 
 
-int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture, room room, int roomId){
+int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Texture * texture, room room, int roomId, Mix_Music * music){
     //Waiting menu when a game have been joined
-
+	using easywsclient::WebSocket;
 
 	//***Sending request of players and own infos***
 	mPlayer player;
@@ -442,6 +492,7 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 	ws->send(jString);
 	free(jString);
 
+	ws->poll();
 
 	//*** Vars ***
 
@@ -481,6 +532,7 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 	instance.slots [2] = EMPTY;
 	instance.slots [3] = EMPTY;
 	instance.roomId = roomId;
+	instance.host = NULL;
 
 
     roomFunctor functor(&instance);
@@ -489,9 +541,11 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 
 	//***Main loop ***
     while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
-        ws->poll();
+
+		ws->poll();
         SDL_Delay(REFRESH_PERIOD*3);
         ws->dispatch(functor);
+
 
 		//Display
 		if(refresh == 1){
@@ -647,101 +701,250 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 
 		//***Events management***
 		while(SDL_PollEvent(&eventSDL)){
+
+			//Leave room
 			if(eventSDL.type == SDL_KEYDOWN && eventSDL.key.keysym.sym == SDLK_ESCAPE){
-				//Determination of slot
+
+				//Determination of current slot
 				for(int i=0; i<instance.nPlayers; i++){
 					if(strcmp(instance.players[i].pseudo, readPseudo()) == 0){
 						player.slot = i;
 					}
 				}
 
-				mEvent eventLeaveRoom = {GAME_START, roomId, -1, player, -1, target};
+				mEvent eventLeaveRoom = {PLAYER_LEAVE_ROOM, roomId, -1, player, -1, target};
 				jString = serializeEvent(eventLeaveRoom);
 				ws->send(jString);
-				//printf("%s\n", jString);
 				free(jString);
 
+				ws->poll();
+
 				quit = 1;
-				quitGame = 1;
+				quitGame = 0;
 
 			}
 
 			else if(eventSDL.type == SDL_MOUSEBUTTONDOWN && eventSDL.button.button == SDL_BUTTON_LEFT
 			&& eventSDL.button.x >= SCREEN_WIDTH/2 - start->w/2 && eventSDL.button.x <= SCREEN_WIDTH/2 + start->w/2
 			&& eventSDL.button.y >= 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2) && eventSDL.button.y <= 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2)+start->h * fontFactor + 1){
-				printf("Reaaaady to ruuumble\n");
-				instance.readyToPlay = 1;
+				printf("Host: %s\n", room.host);
+
+				if(strcmp(readPseudo(), instance.host) == 0){
+					//Get players/AI infos
+					printf("Host starting game: GAME_START\n");
+		      		int * AIs = (int*) malloc(instance.nPlayers*sizeof(int));
+						for(int i=0; i<instance.nPlayers; i++){
+						AIs[i] = instance.players[i].isAIControlled;
+				  	}
+
+					genGame(&(instance.game), instance.nPlayers, AIs);
+
+					room.nPlayers = instance.nPlayers;
+					room.players = instance.players;
+					room.roomId = roomId;
+
+
+					char msg [2000];
+					msg[1999] = 0;
+					serializeGameStart(msg, instance.game, roomId);
+					ws->send(msg);
+					ws->poll();
+
+					instance.readyToPlay = 1;
+					printf("Sent the fucking room\n");
+				}
 			}
 		}
 
 
         if(instance.readyToPlay){
             //If we're host, create game structure, then send to server
-
-			printf("About to generate room and AIs\n");
-            //if(strcmp(readPseudo(), room.host) == 0){
-                //Get players/AI infos
-                int * AIs = (int*) malloc(instance.nPlayers*sizeof(int));
-
-				printf("instance.nPlayers = %d\n", instance.nPlayers);
-                for(int i=0; i<instance.nPlayers; i++){
-					printf("AI for i=%d\n", i);
-                    AIs[i] = instance.players[i].isAIControlled;
-					printf("AI[%d] = %d\n", i ,AIs[i]);
-                }
-
-                genGame(&(instance.game), instance.nPlayers, AIs);
-				printf("game.players[0].units[0].pos.x = %d\n", instance.game.players[0].units[0].pos.x);
-
-				char msg [2000];
-				msg[0] = 0;
-				serializeGameStart(msg, instance.game, roomId);
-				printf("%s\n", msg);
-				ws->send(msg);
-
-                //TODO Send to server
-            //}
-
-			//Updating room;
-			printf("room.nPlayers = %d\n", room.nPlayers);
-			// for(int i=0; i<room.nPlayers; i++){
-			// 	printf("Freeing room pseudo %d\n", i);
-			// 	free(room.players[i].pseudo);
-			// }
-			// free(room.players);
+			printf("room host = %s\n", room.host);
 
 			room.nPlayers = instance.nPlayers;
 			room.players = instance.players;
-
-            quit = mMainHud(ws, room, renderer, texture, instance.game);
-        }
+			room.roomId = roomId;
+			quit = mMainHud(ws, room, renderer, texture, instance.game);
+		}
 
     }
 
-	mEvent eventLeaveRoom = {PLAYER_LEAVE_ROOM, roomId, -1, player, -1, target};
-	jString = serializeEvent(eventLeaveRoom);
-	ws->send(jString);
-	printf("%s\n", jString);
-	free(&jString[0]);
 
+	// Mix_FreeMusic(music);
+	// music = NULL;
 
     return quitGame;
 }
 
 
-char * readPseudo(){
-    FILE * settings = fopen("settings.json", "r");
 
+		//***Pseudos
+char * readPseudo(){
+    FILE * settings = fopen("settings.json", "ab+");
     char jString [300];
     jString[0] = '\0';
-    fgets(jString, 300, settings);
+	if(settings != NULL)
+    	fgets(jString, 300, settings);
     fclose(settings);
+
 
     json_object * json = json_tokener_parse(jString);
     json_object * jPseudo = json_object_object_get(json, "pseudo");
 
     char * pseudo = (char *) malloc(100 * sizeof(char));
-    sprintf(pseudo, json_object_get_string(jPseudo));
+	pseudo[0] = 0;
+
+	if(jPseudo != NULL)
+    	sprintf(pseudo, json_object_get_string(jPseudo));
 
     return pseudo;
+}
+
+
+
+int createPseudo(SDL_Renderer * renderer){
+	SDL_Event event;
+	int quit = 0;
+	int quitGame = 0;
+
+	//Font size and surface height are different, but we need to locate the actual text for hitboxes
+	float fontFactor = 0.655;
+
+	//Is 1 when we come back to this menu to refresh display only when needed
+	int refresh = 1;
+
+	//Surfaces
+	SDL_Rect srcRect;
+	SDL_Rect destRect;
+
+	SDL_Surface * background = NULL;
+	SDL_Surface * title = NULL;
+
+	SDL_Surface * pseudo = NULL;
+	SDL_Surface * validate = NULL;
+
+
+	char * text = (char *) malloc(75 * sizeof(char));
+	text[0] = 0;
+	strcat(text, "your pseudo");
+
+	SDL_StartTextInput();
+
+	while(!quit){
+		SDL_Delay(REFRESH_PERIOD);
+		if(refresh == 1){
+			//Frees previous surfaces before allocating the new ones
+			SDL_FreeSurface(background);
+			SDL_FreeSurface(title);
+
+			SDL_FreeSurface(pseudo);
+			SDL_FreeSurface(validate);
+
+
+			//Background
+			setRectangle(&srcRect, 0, 0, 3840, 2160); //Dim of background
+			setRectangle(&destRect, 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+			background = IMG_Load("resources/menu.png");
+			SDL_Texture * backgroundTexture = SDL_CreateTextureFromSurface(renderer, background);
+			SDL_RenderCopy(renderer, backgroundTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(backgroundTexture);
+
+
+			//Title
+			TTF_Font * font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/8);
+			SDL_Color color = {255, 237, 43};
+
+			title = TTF_RenderText_Blended(font, "welcome", color);
+			SDL_Texture * textTexture = SDL_CreateTextureFromSurface(renderer, title);
+
+			setRectangle(&srcRect, 0, title->h - (title->h*fontFactor+1), title->w, title->h * fontFactor);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - title->w/2, 3*SCREEN_HEIGHT/64, title->w, title->h * fontFactor);
+			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(textTexture);
+			TTF_CloseFont(font);
+
+			font = TTF_OpenFont("resources/starjedi.ttf", SCREEN_HEIGHT/16);
+
+			//Pseudo
+			if(strlen(text) > 0)
+				pseudo = TTF_RenderText_Blended(font, text, color);
+			else
+				pseudo = TTF_RenderText_Blended(font, "your pseudo", color);
+		    textTexture = SDL_CreateTextureFromSurface(renderer, pseudo);
+
+		    setRectangle(&srcRect, 0, pseudo->h - (pseudo->h*fontFactor+1), pseudo->w, pseudo->h * fontFactor + 1);
+		    setRectangle(&destRect, SCREEN_WIDTH/2 - pseudo->w/2, 3*SCREEN_HEIGHT/8-((pseudo->h*fontFactor+1)/2), pseudo->w, pseudo->h * fontFactor + 1);
+		    SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+		    SDL_DestroyTexture(textTexture);
+
+
+			//Validate
+			validate = TTF_RenderText_Blended(font, "validate", color);
+			textTexture = SDL_CreateTextureFromSurface(renderer, validate);
+
+			setRectangle(&srcRect, 0, validate->h - (validate->h*fontFactor+1), validate->w, validate->h * fontFactor + 1);
+			setRectangle(&destRect, SCREEN_WIDTH/2 - validate->w/2, 4*SCREEN_HEIGHT/8-((validate->h*fontFactor+1)/2), validate->w, validate->h * fontFactor + 1);
+			SDL_RenderCopy(renderer, textTexture, &srcRect, &destRect);
+
+			SDL_DestroyTexture(textTexture);
+
+
+			TTF_CloseFont(font);
+
+
+			//Blocks refreshing
+			refresh = 0;
+			SDL_RenderPresent(renderer);
+		}
+
+		while(SDL_PollEvent(&event)){
+
+			if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE){
+				quit = 1;
+				quitGame = 1;
+			}
+
+			//Handle backspace
+			else if(event.key.keysym.sym == SDLK_BACKSPACE && strlen(text) > 0) {
+				text[strlen(text)-1] = 0;
+				refresh = 1;
+			}
+
+			else if(event.type == SDL_TEXTINPUT && strlen(text) < 75){
+				/* Add new text onto the end of our text */
+				strcat(text, event.text.text);
+				refresh = 1;
+			}
+
+			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
+			&& event.button.x >=  SCREEN_WIDTH/2 - validate->w/2 /*+ SCREEN_WIDTH/4 */ && event.button.x <= SCREEN_WIDTH/2 /* + SCREEN_WIDTH/4 */ + validate->w/2
+			&& event.button.y >=  4*SCREEN_HEIGHT/8-((validate->h*fontFactor+1)/2) && event.button.y <= (4*SCREEN_HEIGHT/8-((validate->h*fontFactor+1)/2) + validate->h * fontFactor) ){
+
+				FILE *fp = fopen("settings.json", "ab+");
+
+				json_object * json = json_object_new_object();
+				json_object * jPseudo = json_object_new_string(text);
+				json_object_object_add(json, "pseudo", jPseudo);
+				fprintf(fp, json_object_to_json_string(json));
+
+				json_object_put(json);
+				fclose(fp);
+
+				quit = 1;
+			}
+
+		}
+	}
+
+	SDL_FreeSurface(background);
+	SDL_FreeSurface(title);
+
+	SDL_FreeSurface(pseudo);
+	SDL_FreeSurface(validate);
+
+	return quitGame;
 }

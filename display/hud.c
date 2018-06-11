@@ -253,6 +253,8 @@ void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, v
 				}
 		}
 	}
+
+
 }
 
 
