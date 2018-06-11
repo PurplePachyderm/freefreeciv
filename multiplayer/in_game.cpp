@@ -43,25 +43,21 @@ int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, S
     camera.zoom = 1;
     camera.leftClick = 0;
 
-	printf("1\n");
-
 	int quitGame = 0;
-
-
-	printf("2\n");
+	int ownSlot = 5;
 
 	game.currentPlayer--;	//To start at player 1, or current player if game already started
 	while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
+		printf("New turn..\n");
 		game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
 		busyReset(&game); //Resets units
-		printf("3\n");
 
 		if(game.players[game.currentPlayer].nBuildings > 0){	//Player has not lost
-			printf("3.5\n");
 			if(strcmp(readPseudo(), room.players[game.currentPlayer].pseudo) == 0){	//If it's our client
 				//Trigger the "playing" function
-				printf("4\n");
 				quitGame = mPlayerHud(ws, room, renderer, texture, &game, &camera);
+
+				ownSlot = game.currentPlayer;
 
 				if(quitGame)
 					quit = 1;
@@ -69,19 +65,20 @@ int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, S
 
 			else if(!room.players[game.currentPlayer].isAIControlled){	//Other client
 				//Trigger the "spectate function"
-				printf("5\n");
-				quitGame = mEnemyPlayerHud(ws, room, renderer, texture, &(game), &camera);
+				printf("Enemy Playing\n");
+
+				//Avoids receiving own next ture event
+				quitGame = mEnemyPlayerHud(ws, room, renderer, texture, &(game), &camera, ownSlot);
+
 			}
 
 			else{	//AI
 				//Trigger the AI function
-				printf("6\n");
 				AIHud(renderer, texture, &game, &camera);
 				camera.leftClick = 0;	//Stays at 1 after clicking on next turn button
 			}
 		}
 	}
-	printf("7\n");
 
 	return quitGame;
 }
@@ -101,6 +98,8 @@ int mPlayerHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer,
 	int countdownSec = TURN_TIME; //Approx in sec for display
 
 	int quitGame = 0;
+	mEvent sendedEvent;
+	char * jString;
 
 	//First display before any event
 	mMainDisplay(renderer, texture, *game, *camera, countdownSec);
@@ -116,6 +115,22 @@ int mPlayerHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer,
 			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x >= SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y >= SCREEN_HEIGHT-TILE_SIZE*1.5){
 				quit = QUIT_HUD;
+
+				sendedEvent.roomId = room.roomId;
+				sendedEvent.type = M_END_TURN;
+				sendedEvent.unitId = 0;
+				sendedEvent.target.x = 0;
+				sendedEvent.target.y = 0;
+				sendedEvent.clientId = game->currentPlayer;
+
+				char * pseudo = (char*) malloc(75*sizeof(char));
+				strcpy(pseudo, readPseudo());
+				sendedEvent.playerInfos.pseudo = pseudo;
+				jString = serializeEvent(sendedEvent);
+
+				ws->send(jString);
+				ws->poll();
+				free(jString);
 			}
 
             switch(newEvent){
@@ -762,8 +777,9 @@ public:
 	view * camera;
 	int * quit;
 	mEvent event;
+	int ownSlot;
 
-    void callbackInGame(const std::string & message, mEvent event, SDL_Renderer * renderer, SDL_Texture * texture, view * camera, int * quit){
+    void callbackInGame(const std::string & message, mEvent event, SDL_Renderer * renderer, SDL_Texture * texture, view * camera, int * quit, int ownSlot){
 
         //Checking if game is starting
         json_object * json = json_tokener_parse(&message[0]);
@@ -772,10 +788,11 @@ public:
 
         //If receiving a typed event
         if(jType != NULL){
+			//printf("Receiving: %s\n");
             int type = json_object_get_int(jType);
 			mEvent event = parseEvent(&message[0]);
             free(jType);
-
+			printf("Callback type = %d\n", type);
 			switch(type){
 				case M_MOVEMENT:
 					coord * path;
@@ -802,11 +819,18 @@ public:
 					collect(game, event.unitId, event.target);
 					break;
 
-				case M_END_TURN:
+
 				case PLAYER_LEAVE_GAME:
 				case PLAYER_LEAVE_ROOM:
 					//This will quit the foreignHud function
-					*quit = 1;
+						*quit = 1;
+					break;
+
+				case M_END_TURN:
+					if(ownSlot != event.clientId){
+						printf("quit = 1 in callbask\n");
+						*quit = 1;
+					}
 					break;
 			}
 
@@ -824,14 +848,14 @@ class inGameFunctor {
     }
     void operator()(const std::string& message) {
 		//TODO Set parameters properly
-        instance->callbackInGame(message, instance->event, instance->renderer, instance->texture, instance->camera, instance->quit);
+        instance->callbackInGame(message, instance->event, instance->renderer, instance->texture, instance->camera, instance->quit, instance->ownSlot);
     }
 };
 
 
 
 //In this funcion, we can move the camera & access menu only. Game will check for updates coming from server
-int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
+int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int ownSlot){
 	printf("Welcome to mEnemyPlayerHud!!\n");
 
 	SDL_Event event;
@@ -851,15 +875,13 @@ int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * rende
 	instance.texture = texture;
 	instance.camera = camera;
 	instance.quit = &quit;
+	instance.ownSlot = ownSlot;
 
 	inGameFunctor functor(&instance);
 
 	//First display before any event
-	printf("About to display\n");
 	//XXXFucking bus error
 	mMainDisplay(renderer, texture, *game, *camera, countdownSec);
-	printf("First display done\n");
-
 
     while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
 		ws->poll();
@@ -868,12 +890,6 @@ int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * rende
 
         while(SDL_PollEvent(&event)){
             newEvent = events(event, camera, *game, &selectedTile);
-
-			//End turn (potentially overrides TILE_SELECTION)
-			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x >= SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y >= SCREEN_HEIGHT-TILE_SIZE*1.5){
-				quit = QUIT_HUD;
-			}
 
             switch(newEvent){
                 case MENU:
