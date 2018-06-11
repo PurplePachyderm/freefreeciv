@@ -66,24 +66,26 @@ int parseRooms(room ** rooms, const char * jString){
 
 
 
-int parsePlayers(mPlayer ** players, char ** host, const char * jString){
+int parsePlayers(mPlayer ** players, const char * jString){
     //Retrieves all the players and ther infos in a room
+    printf("1\n");
 
     json_object * json = json_tokener_parse(jString);
-
 
     //Get number of players
     json_object * jNPlayers = json_object_object_get(json, "nPlayers");
     int nPlayers = json_object_get_int(jNPlayers);
     free(jNPlayers);
+    printf("2\n");
 
-
-    free(*players);
-    *players = (mPlayer*) realloc(*players, nPlayers * sizeof(mPlayer));
+    *players = (mPlayer*) malloc(nPlayers * sizeof(mPlayer));
 
     json_object * jPlayers = json_object_object_get(json, "players");
 
+    printf("3\n");
+
     for(int i=0; i<nPlayers; i++){
+        printf("4, %d\n", i);
         json_object * jPlayer = json_object_array_get_idx(jPlayers, i);
 
 
@@ -103,22 +105,27 @@ int parsePlayers(mPlayer ** players, char ** host, const char * jString){
         (*players)[i].slot = json_object_get_int(jSlot);
         free(jSlot);
 
-        //Get host
-        *host = (char*) malloc(100*sizeof(char));
-        json_object * jHost = json_object_object_get(json, "host");
-        sprintf(*host, json_object_get_string(jHost));
-        free(jHost);
-
-
         free(jPlayer);
     }
 
     free(jPlayers);
 
+    //Get host
+
+    printf("5\n");
     return nPlayers;
 }
 
+void serializeHost(char ** host, const char * jString){
+    json_object * json = json_tokener_parse(jString);
 
+    free(*host);
+    *host = NULL;
+    *host = (char*) malloc(100*sizeof(char));
+    json_object * jHost = json_object_object_get(json, "host");
+    sprintf(*host, json_object_get_string(jHost));
+    free(jHost);
+}
 
 char * serializePlayerSelf(char * pseudo, int nPlayers, int roomId){
     //Allows  to create a player JSON string for yourself
@@ -250,7 +257,7 @@ char * serializeEvent(mEvent event){
 
 
 
-    //Setss a JSON string to send to the server if admin when starting a game
+    //Sets a JSON string to send to the server if admin when starting a game
 void serializeGameStart(char jString [2000], struct game game, int roomId){
     printf("Entering serializeGameStart\n");
 
@@ -583,12 +590,15 @@ void serializeGameStart(char jString [2000], struct game game, int roomId){
     //Returns the game contained in a GAME_START message
 void parseGameStart(const char * jString, struct game * game){
 
-    json_object * jGame = json_tokener_parse(jString);
+    json_object * json = json_tokener_parse(jString);
+
+    json_object * jGame = json_object_object_get(json, "game");
 
         //Parsing
     //game.nPlayers
     json_object * jNPlayers = json_object_object_get(jGame, "nPlayers");
     game->nPlayers = json_object_get_int(jNPlayers);
+    printf("Inside parsing > nPlayers = %d", game->nPlayers);
 
     //game.currentPlayer
     json_object * jCurrentPlayer = json_object_object_get(jGame, "currentPlayer");

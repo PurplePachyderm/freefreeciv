@@ -393,6 +393,7 @@ public:
 
     void callbackRoom(const std::string & message, mPlayer ** players, int * nPlayers,
 	int *readyToPlay, int (* slots) [4], int roomId, struct game * game, char ** host){
+		printf("receiving > %s\n", &message[0]);
 
         //Checking if game is starting
         json_object * json = json_tokener_parse(&message[0]);
@@ -412,6 +413,7 @@ public:
 
 				//Filling game structure before starting game
 				parseGameStart(&message[0], game);
+				printf("After parsing > nPlayers = %d", game->nPlayers);
             }
 		}
 
@@ -423,21 +425,17 @@ public:
 
 			//First we check that it is our room
 			if(roomId == newRoomId){
-				printf("callback room > That's our room udate =)\n");
 
 				//Free pseudos
 				for(int i=0; i<*nPlayers; i++){
 					free((*players)[i].pseudo);
-					(*players)[i].pseudo = NULL;
 				}
 
 				free(*players);
-				*players = NULL;
 
 				//Players get reallocated
-				free(*host);
-				*host = NULL;
-				*nPlayers = parsePlayers(players, &host[0], &message[0]);
+				*nPlayers = parsePlayers(players, &message[0]);
+				serializeHost(&host[0], &message[0]);
 
 
 				//Re init slots
@@ -727,7 +725,7 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 			else if(eventSDL.type == SDL_MOUSEBUTTONDOWN && eventSDL.button.button == SDL_BUTTON_LEFT
 			&& eventSDL.button.x >= SCREEN_WIDTH/2 - start->w/2 && eventSDL.button.x <= SCREEN_WIDTH/2 + start->w/2
 			&& eventSDL.button.y >= 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2) && eventSDL.button.y <= 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2)+start->h * fontFactor + 1){
-				printf("Host: %s\n", room.host);
+				printf("Host: %s\n", instance.host);
 
 				if(strcmp(readPseudo(), instance.host) == 0){
 					//Get players/AI infos
@@ -759,11 +757,12 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 
         if(instance.readyToPlay){
             //If we're host, create game structure, then send to server
-			printf("room host = %s\n", room.host);
+			printf("room host = %s\n", instance.host);
 
 			room.nPlayers = instance.nPlayers;
 			room.players = instance.players;
 			room.roomId = roomId;
+			printf("Outside callback: %d\n", instance.game.nPlayers);
 			quit = mMainHud(ws, room, renderer, texture, instance.game);
 		}
 
