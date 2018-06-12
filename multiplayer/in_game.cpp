@@ -45,7 +45,6 @@ int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, S
 
 	game.currentPlayer--;	//To start at player 1, or current player if game already started
 	while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
-		printf("New turn..\n");
 		game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
 		busyReset(&game); //Resets units
 
@@ -62,7 +61,6 @@ int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, S
 
 			else if(!room.players[game.currentPlayer].isAIControlled){	//Other client
 				//Trigger the "spectate function"
-				printf("Enemy Playing\n");
 
 				//Avoids receiving own next ture event
 				quitGame = mEnemyPlayerHud(ws, room, renderer, texture, &(game), &camera, ownSlot);
@@ -278,15 +276,16 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					sendedEvent.unitId = peasantId;
 					sendedEvent.target.x = target.x;
 					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
 
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
 					ws->poll();
 					free(jString);
-
-					target.x = 0;
-					target.y = 0;
 				}
 			}
 
@@ -309,7 +308,11 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					sendedEvent.unitId = peasantId;
 					sendedEvent.target.x = target.x;
 					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
 
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
@@ -329,24 +332,23 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 				if(quitGame)
 					quit = QUIT_HUD;
 
-				printf("Before createBarrack\n");
 				createBarrack(game, target, peasantId);
-				printf("After createBarrack\n");
 
 				sendedEvent.roomId = room.roomId;
 				sendedEvent.type = M_CREATE_BARRACK;
 				sendedEvent.unitId = peasantId;
 				sendedEvent.target.x = target.x;
 				sendedEvent.target.y = target.y;
-				sendedEvent.playerInfos.pseudo = readPseudo();
+				sendedEvent.clientId = game->currentPlayer;
 
+				char * pseudo = (char*) malloc(75*sizeof(char));
+				strcpy(pseudo, readPseudo());
+				sendedEvent.playerInfos.pseudo = pseudo;
 				jString = serializeEvent(sendedEvent);
 
 				ws->send(jString);
 				ws->poll();
 				free(jString);
-				free(sendedEvent.playerInfos.pseudo);
-
 			}
 
 			//Collect Button
@@ -368,7 +370,11 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					sendedEvent.unitId = peasantId;
 					sendedEvent.target.x = target.x;
 					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
 
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
@@ -518,7 +524,11 @@ int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					sendedEvent.unitId = soldierId;
 					sendedEvent.target.x = target.x;
 					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
 
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
@@ -548,7 +558,11 @@ int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 					sendedEvent.unitId = soldierId;
 					sendedEvent.target.x = target.x;
 					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
 
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
 					jString = serializeEvent(sendedEvent);
 
 					ws->send(jString);
@@ -701,7 +715,11 @@ int mBuildingHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * rendere
 							sendedEvent.unitId = buildingId;
 							sendedEvent.target.x = target.x;
 							sendedEvent.target.y = target.y;
+							sendedEvent.clientId = game->currentPlayer;
 
+							char * pseudo = (char*) malloc(75*sizeof(char));
+							strcpy(pseudo, readPseudo());
+							sendedEvent.playerInfos.pseudo = pseudo;
 							jString = serializeEvent(sendedEvent);
 
 							ws->send(jString);
@@ -720,10 +738,15 @@ int mBuildingHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * rendere
 							sendedEvent.unitId = buildingId;
 							sendedEvent.target.x = target.x;
 							sendedEvent.target.y = target.y;
+							sendedEvent.clientId = game->currentPlayer;
 
+							char * pseudo = (char*) malloc(75*sizeof(char));
+							strcpy(pseudo, readPseudo());
+							sendedEvent.playerInfos.pseudo = pseudo;
 							jString = serializeEvent(sendedEvent);
 
 							ws->send(jString);
+							ws->poll();
 							free(jString);
 						}
 
@@ -829,7 +852,6 @@ public:
 
         //If receiving a typed event
         if(jType != NULL){
-			//printf("Receiving: %s\n");
             int type = json_object_get_int(jType);
 			mEvent event = parseEvent(&message[0]);
             free(jType);
@@ -900,7 +922,6 @@ class inGameFunctor {
 
 //In this funcion, we can move the camera & access menu only. Game will check for updates coming from server
 int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int ownSlot){
-	printf("Welcome to mEnemyPlayerHud!!\n");
 
 	SDL_Event event;
 	int quit = 0;

@@ -125,6 +125,7 @@ void serializeHost(char ** host, const char * jString){
     json_object * jHost = json_object_object_get(json, "host");
     sprintf(*host, json_object_get_string(jHost));
     free(jHost);
+    printf("Host = %s\n", *host);
 }
 
 char * serializePlayerSelf(char * pseudo, int nPlayers, int roomId){

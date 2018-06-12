@@ -57,8 +57,8 @@ int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture, Mix_Music * music)
 	 }
 
 	 if(!quit){
-	    ws = WebSocket::from_url(SERVER_ADRRESS);
-	    // ws = WebSocket::from_url("ws://port-8080.freefreeciv-server-olivierworkk493832.codeanyapp.com");
+	    //ws = WebSocket::from_url(SERVER_ADRRESS);
+	    ws = WebSocket::from_url("ws://port-8080.freefreeciv-server-olivierworkk493832.codeanyapp.com");
 	    assert(ws);
 
 	    //Send pseudo
@@ -393,7 +393,6 @@ public:
 
     void callbackRoom(const std::string & message, mPlayer ** players, int * nPlayers,
 	int *readyToPlay, int (* slots) [4], int roomId, struct game * game, char ** host){
-		printf("receiving > %s\n", &message[0]);
 
         //Checking if game is starting
         json_object * json = json_tokener_parse(&message[0]);
@@ -408,12 +407,10 @@ public:
 
 			//If it is OUR game start event
             if(event.type == GAME_START && event.roomId == roomId){
-				printf("Detected a game start\n");
                 *readyToPlay = 1;
 
 				//Filling game structure before starting game
 				parseGameStart(&message[0], game);
-				printf("After parsing > nPlayers = %d", game->nPlayers);
             }
 		}
 
@@ -435,7 +432,7 @@ public:
 
 				//Players get reallocated
 				*nPlayers = parsePlayers(players, &message[0]);
-				serializeHost(&host[0], &message[0]);
+				serializeHost(host, &message[0]);
 
 
 				//Re init slots
@@ -675,10 +672,7 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 
 
 			//Start button
-			if(strcmp( instance.host, readPseudo() ) != 0)
-				start = TTF_RenderText_Blended(font, "waiting for the game to start", color);
-			else
-				start = TTF_RenderText_Blended(font, "start game", color);
+			start = TTF_RenderText_Blended(font, "start game", color);
 
 			textTexture = SDL_CreateTextureFromSurface(renderer, start);
 
@@ -731,11 +725,9 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 			else if(eventSDL.type == SDL_MOUSEBUTTONDOWN && eventSDL.button.button == SDL_BUTTON_LEFT
 			&& eventSDL.button.x >= SCREEN_WIDTH/2 - start->w/2 && eventSDL.button.x <= SCREEN_WIDTH/2 + start->w/2
 			&& eventSDL.button.y >= 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2) && eventSDL.button.y <= 7*SCREEN_HEIGHT/8-((start->h*fontFactor+1)/2)+start->h * fontFactor + 1){
-				printf("Host: %s\n", instance.host);
 
-				if(strcmp(readPseudo(), instance.host) == 0){
+				if(strcmp(readPseudo(), instance.host) == 0 || 1){
 					//Get players/AI infos
-					printf("Host starting game: GAME_START\n");
 		      		int * AIs = (int*) malloc(instance.nPlayers*sizeof(int));
 						for(int i=0; i<instance.nPlayers; i++){
 						AIs[i] = instance.players[i].isAIControlled;
@@ -755,7 +747,6 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 					ws->poll();
 
 					instance.readyToPlay = 1;
-					printf("Sent the fucking room\n");
 				}
 			}
 		}
@@ -763,12 +754,10 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 
         if(instance.readyToPlay){
             //If we're host, create game structure, then send to server
-			printf("room host = %s\n", instance.host);
 
 			room.nPlayers = instance.nPlayers;
 			room.players = instance.players;
 			room.roomId = roomId;
-			printf("Outside callback: %d\n", instance.game.nPlayers);
 			quit = mMainHud(ws, room, renderer, texture, instance.game);
 		}
 
