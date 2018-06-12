@@ -3,6 +3,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <time.h>
 
 #include "../include/display/hud.h"
 #include "../include/display/hud_display.h"
@@ -13,6 +14,8 @@
 #include "../include/game/game.h"
 #include "../include/game/units_actions.h"
 #include "../include/game/ai.h"
+
+
 
 
 //Basic functions (reused in several Huds)
@@ -75,6 +78,10 @@ int mainHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
 
 //Player Hud
 int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
+
+
+
+
 	SDL_Event event;
 	int quit = 0;
 	int newEvent = 0;
@@ -261,6 +268,17 @@ void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, v
 
 //Peasant Hud
 int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
+	srand(time(NULL));
+
+	int soundId = rand()%3;
+	soundId++;
+	char soundPath [100];
+	sprintf(soundPath, "resources/sounds/peasant_select%d.mp3", soundId);
+
+	Mix_Music * music = NULL;
+	music = Mix_LoadMUS(soundPath);
+	Mix_PlayMusic( music, 1);
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -426,6 +444,8 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 		}
 	}
 
+	Mix_FreeMusic(music);
+
 	return quitGame;
 }
 
@@ -433,6 +453,17 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 //Soldier Hud
 int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int soldierId){
+	srand(time(NULL));
+
+	int soundId = rand()%2;
+	soundId++;
+	char soundPath [100];
+	sprintf(soundPath, "resources/sounds/soldier_select%d.mp3", soundId);
+
+	Mix_Music * music = NULL;
+	music = Mix_LoadMUS(soundPath);
+	Mix_PlayMusic( music, 1);
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -568,6 +599,8 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 		}
 	}
 
+	Mix_FreeMusic(music);
+
 	return quitGame;
 }
 
@@ -575,6 +608,15 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 //Building Hud
 int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int buildingId){
+
+	Mix_Music * music = NULL;
+	if(game->players[game->currentPlayer].buildings[buildingId].type == BARRACK)
+		music = Mix_LoadMUS("resources/sounds/barrack_select.mp3");
+	else
+		music = Mix_LoadMUS("resources/sounds/city_select1.mp3");
+
+	Mix_PlayMusic( music, 1);
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -701,6 +743,8 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 			buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
 		}
 	}
+
+	Mix_FreeMusic(music);
 
 	return quitGame;
 }

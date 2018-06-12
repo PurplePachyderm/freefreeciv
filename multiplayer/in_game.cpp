@@ -8,7 +8,7 @@
 #include "../include/multiplayer/easywsclient.hpp"
 #include "../include/multiplayer/game_init.hpp"
 #include "../include/multiplayer/in_game.hpp"
-#include "../include/multiplayer/multi_hud.hpp"
+#include "../include/multiplayer/multi_display.hpp"
 #include "../include/multiplayer/json.h"
 
 
@@ -32,9 +32,6 @@
 
 //Main HUD (Main game function, sets everything to default state)
 int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
-	printf("Entering mMainHud\n");
-	printf("game.players[0].units[0].pos.x = %d\n", game.players[2].units[0].pos.x);
-
 
 	int quit = 0;
 	view camera;
@@ -80,13 +77,14 @@ int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, S
 		}
 	}
 
-	return quitGame;
+	return 1;
 }
 
 
 
 //Player Hud
 int mPlayerHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
+
 	SDL_Event event;
 	int quit = 0;
 	int newEvent = 0;
@@ -102,7 +100,7 @@ int mPlayerHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer,
 	char * jString;
 
 	//First display before any event
-	mMainDisplay(renderer, texture, *game, *camera, countdownSec);
+	mMainDisplay(renderer, texture, *game, *camera, countdownSec, readPseudo());
 
 
     while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
@@ -203,7 +201,7 @@ int mPlayerHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer,
 		countdownUpdate(&countdown, &countdownSec, quit, &newEvent, game);
 
         if(newEvent){  //Refresh display if a new event has occured
-			mainDisplay(renderer, texture, *game, *camera, countdownSec);
+			mMainDisplay(renderer, texture, *game, *camera, countdownSec, readPseudo());
 			newEvent = 0;
 		}
     }
@@ -215,6 +213,18 @@ int mPlayerHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer,
 
 //Peasant Hud
 int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
+	srand(time(NULL));
+
+	int soundId = rand()%3;
+	soundId++;
+	char soundPath [100];
+	sprintf(soundPath, "resources/sounds/peasant_select%d.mp3", soundId);
+
+	Mix_Music * music = NULL;
+	music = Mix_LoadMUS(soundPath);
+	Mix_PlayMusic( music, 1);
+
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -226,7 +236,7 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 	mEvent sendedEvent;
 	char * jString;
 
-	peasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId);
+	mPeasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId, readPseudo());
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -319,21 +329,24 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 				if(quitGame)
 					quit = QUIT_HUD;
 
-				int success = createBarrack(game, target, peasantId);
+				printf("Before createBarrack\n");
+				createBarrack(game, target, peasantId);
+				printf("After createBarrack\n");
 
-				if(success){
-					sendedEvent.roomId = room.roomId;
-					sendedEvent.type = M_CREATE_BARRACK;
-					sendedEvent.unitId = peasantId;
-					sendedEvent.target.x = target.x;
-					sendedEvent.target.y = target.y;
+				sendedEvent.roomId = room.roomId;
+				sendedEvent.type = M_CREATE_BARRACK;
+				sendedEvent.unitId = peasantId;
+				sendedEvent.target.x = target.x;
+				sendedEvent.target.y = target.y;
+				sendedEvent.playerInfos.pseudo = readPseudo();
 
-					jString = serializeEvent(sendedEvent);
+				jString = serializeEvent(sendedEvent);
 
-					ws->send(jString);
-					ws->poll();
-					free(jString);
-				}
+				ws->send(jString);
+				ws->poll();
+				free(jString);
+				free(sendedEvent.playerInfos.pseudo);
+
 			}
 
 			//Collect Button
@@ -426,9 +439,11 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 
 		//Refresh
 		if(newEvent){
-			peasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId);
+			mPeasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId, readPseudo());
 		}
 	}
+
+	Mix_FreeMusic(music);
 
 	return quitGame;
 }
@@ -437,6 +452,18 @@ int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 
 //Soldier Hud
 int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int soldierId){
+	srand(time(NULL));
+
+	int soundId = rand()%2;
+	soundId++;
+	char soundPath [100];
+	sprintf(soundPath, "resources/sounds/soldier_select%d.mp3", soundId);
+
+	Mix_Music * music = NULL;
+	music = Mix_LoadMUS(soundPath);
+	Mix_PlayMusic( music, 1);
+
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -448,7 +475,7 @@ int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 	mEvent sendedEvent;
 	char * jString;
 
-	soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
+	mSoldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId, readPseudo());
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -592,9 +619,11 @@ int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 
 		//Refresh
 		if(newEvent){
-			soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
+			mSoldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId, readPseudo());
 		}
 	}
+
+	Mix_FreeMusic(music);
 
 	return quitGame;
 }
@@ -603,6 +632,16 @@ int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer
 
 //Building Hud
 int mBuildingHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int buildingId){
+
+	Mix_Music * music = NULL;
+	if(game->players[game->currentPlayer].buildings[buildingId].type == BARRACK)
+			music = Mix_LoadMUS("resources/sounds/barrack_select.mp3");
+	else
+		music = Mix_LoadMUS("resources/sounds/city_select1.mp3");
+
+	Mix_PlayMusic( music, 1);
+
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -617,7 +656,7 @@ int mBuildingHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * rendere
 	mEvent sendedEvent;
 	char * jString;
 
-	buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+	mBuildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId, readPseudo());
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -758,9 +797,11 @@ int mBuildingHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * rendere
 
 		//Refresh
 		if(newEvent){
-			buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+			mBuildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId, readPseudo());
 		}
 	}
+
+	Mix_FreeMusic(music);
 
 	return quitGame;
 }
@@ -792,7 +833,7 @@ public:
             int type = json_object_get_int(jType);
 			mEvent event = parseEvent(&message[0]);
             free(jType);
-			printf("Callback type = %d\n", type);
+
 			switch(type){
 				case M_MOVEMENT:
 					coord * path;
@@ -815,6 +856,10 @@ public:
 					createSoldier(game, event.target, event.unitId);
 					break;
 
+				case M_CREATE_BARRACK:
+					createBarrack(game, event.target, event.unitId);
+					break;
+
 				case M_HARVEST:
 					collect(game, event.unitId, event.target);
 					break;
@@ -828,7 +873,6 @@ public:
 
 				case M_END_TURN:
 					if(ownSlot != event.clientId){
-						printf("quit = 1 in callbask\n");
 						*quit = 1;
 					}
 					break;
@@ -881,7 +925,8 @@ int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * rende
 
 	//First display before any event
 	//XXXFucking bus error
-	mMainDisplay(renderer, texture, *game, *camera, countdownSec);
+	mBasicDisplay(renderer, texture, *game, *camera, countdownSec, 0, room.players[game->currentPlayer].pseudo);
+	SDL_RenderPresent(renderer);
 
     while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
 		ws->poll();
@@ -905,7 +950,8 @@ int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * rende
 		countdownUpdate(&countdown, &countdownSec, quit, &newEvent, game);
 
         if(newEvent){  //Refresh display if a new event has occured
-			mainDisplay(renderer, texture, *game, *camera, countdownSec);
+			mBasicDisplay(renderer, texture, *game, *camera, countdownSec, 0, room.players[game->currentPlayer].pseudo);
+			SDL_RenderPresent(renderer);
 			newEvent = 0;
 		}
     }

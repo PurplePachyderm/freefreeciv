@@ -58,7 +58,7 @@ int wsConnect(SDL_Renderer * renderer, SDL_Texture * texture, Mix_Music * music)
 
 	 if(!quit){
 	    ws = WebSocket::from_url(SERVER_ADRRESS);
-	    //ws = WebSocket::from_url("ws://port-8080.freefreeciv-server-olivierworkk493832.codeanyapp.com");
+	    // ws = WebSocket::from_url("ws://port-8080.freefreeciv-server-olivierworkk493832.codeanyapp.com");
 	    assert(ws);
 
 	    //Send pseudo
@@ -530,7 +530,9 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 	instance.slots [2] = EMPTY;
 	instance.slots [3] = EMPTY;
 	instance.roomId = roomId;
-	instance.host = NULL;
+	instance.host = (char *) malloc(30*sizeof(char));
+
+	strcpy(instance.host, "waitint for host");
 
 
     roomFunctor functor(&instance);
@@ -673,7 +675,11 @@ int roomFunction(easywsclient::WebSocket * ws, SDL_Renderer * renderer, SDL_Text
 
 
 			//Start button
-			start = TTF_RenderText_Blended(font, "waiting for the game to start", color);
+			if(strcmp( instance.host, readPseudo() ) != 0)
+				start = TTF_RenderText_Blended(font, "waiting for the game to start", color);
+			else
+				start = TTF_RenderText_Blended(font, "start game", color);
+
 			textTexture = SDL_CreateTextureFromSurface(renderer, start);
 
 			setRectangle(&srcRect, 0, start->h - (start->h*fontFactor+1), start->w, start->h * fontFactor + 1);

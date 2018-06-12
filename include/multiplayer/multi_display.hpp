@@ -1,4 +1,4 @@
-#include "display.h"
+#include "../display/display.h"
 #include "../game/game.h"
 #include <json-c/json.h>
 

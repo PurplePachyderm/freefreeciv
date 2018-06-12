@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include "../include/game/units_actions.h"
 #include "../include/game/game.h"
 #include "../include/game/structures_init.h"
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 
 
 
@@ -94,6 +98,7 @@ int pathTesting(struct game game, coord startPos, coord targetPos, int size, coo
 
 
 int moveUnit(struct game * game, int unitId, coord targetPos, coord ** path){
+
     //Returns 0 if no pass has been found, otherwise returns its length
 
     int nIterations = 0;    //Avoids huge computation time (corresponds to the amount of tesed tiles)
@@ -122,12 +127,25 @@ int moveUnit(struct game * game, int unitId, coord targetPos, coord ** path){
             }
         }
     }
+
     return size;
 }
 
 
 
 int collect(struct game * game, int unitId, coord targetPos){
+    srand(time(NULL));
+
+    int soundId = rand()%3;
+    soundId++;
+    char soundPath [100];
+    sprintf(soundPath, "resources/sounds/peasant_action%d.mp3", soundId);
+
+    Mix_Music * music = NULL;
+    music = Mix_LoadMUS(soundPath);
+    Mix_PlayMusic( music, 1);
+
+
     int returnValue = 0;
 
     int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
@@ -152,12 +170,24 @@ int collect(struct game * game, int unitId, coord targetPos){
             }
         }
     }
+    SDL_Delay(2000);
+    Mix_FreeMusic(music);
+
     return returnValue;
 }
 
 
 
 int attack(struct game * game, int unitId, coord targetPos){
+    Mix_Music * music = NULL;
+    if(game->players[game->currentPlayer].units[unitId].type == PEASANT)
+        music = Mix_LoadMUS("resources/sounds/peasant_action3.mp3");
+    else
+        music = Mix_LoadMUS("resources/sounds/soldier_attack1.mp3");
+
+    Mix_PlayMusic( music, 1);
+
+
     int returnValue = 0;
 
     int distX = abs(targetPos.x-game->players[game->currentPlayer].units[unitId].pos.x);
@@ -251,6 +281,10 @@ int attack(struct game * game, int unitId, coord targetPos){
             }//1   2   1
         }//1   3   3   1
     }//1   4   6   4   1
+
+    SDL_Delay(2000);
+    Mix_FreeMusic(music);
+
     return returnValue;
 }//1   5   10  10  5   1
 // :p
