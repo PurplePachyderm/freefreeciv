@@ -113,7 +113,6 @@ void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view * camera,
 	coord selectedTile;	//Only used to call events management
 
 
-
 	for(int i=0; i<length; i++){
 		game->players[game->currentPlayer].units[tokenId].pos = path[i];
 		countdown = 0;
@@ -123,7 +122,7 @@ void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view * camera,
 		dispTokens(renderer, texture, *camera, *game);
 		SDL_RenderPresent(renderer);
 
-		while(countdown < 1000){
+		while(countdown < 250){
 			SDL_Delay(REFRESH_PERIOD);
 			countdown += REFRESH_PERIOD;
 			while(SDL_PollEvent(&event)){
@@ -136,12 +135,6 @@ void movementAnim(SDL_Renderer * renderer, SDL_Texture * texture, view * camera,
 				SDL_RenderPresent(renderer);
 			}
 		}
-
-
-
-
-
-
-		SDL_Delay(500);
+		
 	}
 }

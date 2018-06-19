@@ -3,7 +3,14 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
-#include <time.h>
+#include <json-c/json.h>
+
+#include "../include/multiplayer/easywsclient.hpp"
+#include "../include/multiplayer/game_init.hpp"
+#include "../include/multiplayer/in_game.hpp"
+#include "../include/multiplayer/multi_display.hpp"
+#include "../include/multiplayer/json.h"
+
 
 #include "../include/display/hud.h"
 #include "../include/display/hud_display.h"
@@ -17,29 +24,14 @@
 
 
 
-
-//Basic functions (reused in several Huds)
-int countdownUpdate(int * countdown, int * countdownSec, int quit, int * newEvent, struct game * game){
-	*countdown -= REFRESH_PERIOD;
-	if(*countdown/1000 < *countdownSec){	//Refresh display
-		(*countdownSec)--;	// (╯°□°）╯︵ ┻━┻ Don't forget the parenthesis
-		*newEvent = 1;
-
-		if(*countdownSec < 0){	//Change player at end of countdown
-			*countdown = TURN_TIME * 1000;
-			*countdownSec = TURN_TIME;
-			game->currentPlayer = (game->currentPlayer+1) % game->nPlayers;
-			quit = 1;	//Back to mainHub for the next player
-		}
-	}
-
-	return quit; //Indicates if the layer of Hud must be leaved (can be ignored for mainHud)
-}
+//XXX Basically solo functions sending events to server
+// Multiplayer equivalent to "display/hud.c"
+//XXX WIP
 
 
 
 //Main HUD (Main game function, sets everything to default state)
-int mainHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
+int mMainHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
 
 	int quit = 0;
 	view camera;
@@ -49,38 +41,47 @@ int mainHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game game){
     camera.leftClick = 0;
 
 	int quitGame = 0;
+	int ownSlot = 5;
 
 	game.currentPlayer--;	//To start at player 1, or current player if game already started
-	while(!quit){
+	while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
 		game.currentPlayer = (game.currentPlayer+1) % game.nPlayers;
 		busyReset(&game); //Resets units
 
 		if(game.players[game.currentPlayer].nBuildings > 0){	//Player has not lost
+			if(strcmp(readPseudo(), room.players[game.currentPlayer].pseudo) == 0){	//If it's our client
+				//Trigger the "playing" function
+				quitGame = mPlayerHud(ws, room, renderer, texture, &game, &camera);
 
-			if(!game.players[game.currentPlayer].isAIControlled){	//Player
-				quitGame = playerHud(renderer, texture, &game, &camera);
+				ownSlot = game.currentPlayer;
 
 				if(quitGame)
 					quit = 1;
 			}
 
+			else if(!room.players[game.currentPlayer].isAIControlled){	//Other client
+				//Trigger the "spectate function"
+
+				//Avoids receiving own next ture event
+				quitGame = mEnemyPlayerHud(ws, room, renderer, texture, &(game), &camera, ownSlot);
+
+			}
+
 			else{	//AI
+				//Trigger the AI function
 				AIHud(renderer, texture, &game, &camera);
 				camera.leftClick = 0;	//Stays at 1 after clicking on next turn button
 			}
 		}
 	}
 
-	return quitGame;
+	return 1;
 }
 
 
 
 //Player Hud
-int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
-
-
-
+int mPlayerHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
 
 	SDL_Event event;
 	int quit = 0;
@@ -93,12 +94,14 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 	int countdownSec = TURN_TIME; //Approx in sec for display
 
 	int quitGame = 0;
+	mEvent sendedEvent;
+	char * jString;
 
 	//First display before any event
-	mainDisplay(renderer, texture, *game, *camera, countdownSec);
+	mMainDisplay(renderer, texture, *game, *camera, countdownSec, readPseudo());
 
 
-    while(!quit){
+    while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
         SDL_Delay(REFRESH_PERIOD);
 
         while(SDL_PollEvent(&event)){
@@ -108,6 +111,22 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 			if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x >= SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y >= SCREEN_HEIGHT-TILE_SIZE*1.5){
 				quit = QUIT_HUD;
+
+				sendedEvent.roomId = room.roomId;
+				sendedEvent.type = M_END_TURN;
+				sendedEvent.unitId = 0;
+				sendedEvent.target.x = 0;
+				sendedEvent.target.y = 0;
+				sendedEvent.clientId = game->currentPlayer;
+
+				char * pseudo = (char*) malloc(75*sizeof(char));
+				strcpy(pseudo, readPseudo());
+				sendedEvent.playerInfos.pseudo = pseudo;
+				jString = serializeEvent(sendedEvent);
+
+				ws->send(jString);
+				ws->poll();
+				free(jString);
 			}
 
             switch(newEvent){
@@ -126,13 +145,13 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 						switch(game->players[game->currentPlayer].units[tokenId].type){
 
 							case PEASANT:
-							quitGame = peasantHud(renderer, texture, game, camera, &countdown, &countdownSec, tokenId);
+							quitGame = mPeasantHud(ws, room, renderer, texture, game, camera, &countdown, &countdownSec, tokenId);
 							if(quitGame)
 								quit = QUIT_HUD;
 							break;
 
 							case SOLDIER:
-							quitGame = soldierHud(renderer, texture, game, camera, &countdown, &countdownSec, tokenId);
+							quitGame = mSoldierHud(ws, room, renderer, texture, game, camera, &countdown, &countdownSec, tokenId);
 							if(quitGame)
 								quit = QUIT_HUD;
 							break;
@@ -141,7 +160,7 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 					else if(checkOwnBuilding(*game, selectedTile) < game->players[game->currentPlayer].nBuildings){	//Cycles buildingss
 						tokenId = checkOwnBuilding(*game, selectedTile);
 						if(tokenId < game->players[game->currentPlayer].nBuildings){
-								quitGame = buildingHud(renderer, texture, game, camera, &countdown, &countdownSec, tokenId);
+								quitGame = mBuildingHud(ws, room, renderer, texture, game, camera, &countdown, &countdownSec, tokenId);
 								if(quitGame)
 									quit = QUIT_HUD;
 
@@ -150,7 +169,7 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 					else if(checkOwnUnit(*game, selectedTile) < game->players[game->currentPlayer].nUnits){	//Cycles buildingss
 						tokenId = checkOwnBuilding(*game, selectedTile);
 						if(tokenId < game->players[game->currentPlayer].nBuildings){
-								quitGame = buildingHud(renderer, texture, game, camera, &countdown, &countdownSec, tokenId);
+								quitGame = mBuildingHud(ws, room, renderer, texture, game, camera, &countdown, &countdownSec, tokenId);
 								if(quitGame)
 									quit = QUIT_HUD;
 
@@ -180,7 +199,7 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 		countdownUpdate(&countdown, &countdownSec, quit, &newEvent, game);
 
         if(newEvent){  //Refresh display if a new event has occured
-			mainDisplay(renderer, texture, *game, *camera, countdownSec);
+			mMainDisplay(renderer, texture, *game, *camera, countdownSec, readPseudo());
 			newEvent = 0;
 		}
     }
@@ -190,84 +209,8 @@ int playerHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game
 
 
 
-//AI Hud (no ingame events)
-void AIHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera){
-	ai ai;
-	coord * path = NULL;
-	initAI(*game, &ai);
-	SDL_Event event;
-
-	while(ai.currentBuilding < ai.nBuildings){
-		basicDisplay(renderer, texture, *game, *camera, 0, 0);
-
-		while(SDL_PollEvent(&event)){
-			//Do nothing, avoid crashing on user input
-		}
-
-		int actionAI = routineAI(game, &ai);
-
-		if(actionAI != BUILDING_CREATION && actionAI != PASS_TURN){	//If unit is playing
-			int length = moveUnit(game, ai.currentUnit, ai.movementTarget, &path);
-			if(length){
-				movementAnim(renderer, texture, camera, game, path, length, ai.currentUnit);
-				free(path);
-			}
-		}
-
-		switch(actionAI){
-			case ATTACK:
-				attack(game, ai.currentUnit, ai.actionTarget);
-				ai.currentUnit++;
-				//TODO Animation?
-				break;
-
-			case HARVEST:
-				collect(game, ai.currentUnit, ai.actionTarget);
-				ai.currentUnit++;
-				//TODO Animation?
-				break;
-
-			case UNIT_CREATION:
-				switch(game->players[game->currentPlayer].buildings[ai.currentBuilding].type){
-					case CITY:
-						createPeasant(game, ai.actionTarget, ai.currentBuilding);
-						break;
-
-					case BARRACK:
-						createSoldier(game, ai.actionTarget, ai.currentBuilding);
-						break;
-				}
-
-				ai.currentBuilding++;
-
-				//TODO Animation?
-				break;
-
-			case BUILDING_CREATION:
-				createBarrack(game, ai.actionTarget, ai.currentUnit);
-				ai.currentUnit++;
-				//TODO Animation?
-				break;
-
-			case PASS_TURN:
-				//Avoids infinite loop in case of other exit code
-
-				if(ai.currentUnit < game->players[game->currentPlayer].nUnits){
-					ai.currentUnit++;
-				}
-				else{
-					ai.currentBuilding++;
-				}
-		}
-	}
-
-
-}
-
-
-
 //Peasant Hud
-int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
+int mPeasantHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int peasantId){
 	srand(time(NULL));
 
 	int soundId = rand()%3;
@@ -279,6 +222,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 	music = Mix_LoadMUS(soundPath);
 	Mix_PlayMusic( music, 1);
 
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -287,10 +231,10 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 	coord target;
 	coord * path = NULL;
 	coord selectedTile;
-	//int tokenId;
-	//int ownerId;
+	mEvent sendedEvent;
+	char * jString;
 
-	peasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId);
+	mPeasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId, readPseudo());
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -327,8 +271,21 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 					movementAnim(renderer, texture, camera, game, path, length, peasantId);
 					free(path);
 
-					target.x = 0;
-					target.y = 0;
+					sendedEvent.roomId = room.roomId;
+					sendedEvent.type = M_MOVEMENT;
+					sendedEvent.unitId = peasantId;
+					sendedEvent.target.x = target.x;
+					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
+
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
+					jString = serializeEvent(sendedEvent);
+
+					ws->send(jString);
+					ws->poll();
+					free(jString);
 				}
 			}
 
@@ -343,7 +300,25 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 				if(quitGame)
 					quit = QUIT_HUD;
 
-				attack(game, peasantId, target);
+				int success = attack(game, peasantId, target);
+
+				if(success){
+					sendedEvent.roomId = room.roomId;
+					sendedEvent.type = M_ATTACK;
+					sendedEvent.unitId = peasantId;
+					sendedEvent.target.x = target.x;
+					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
+
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
+					jString = serializeEvent(sendedEvent);
+
+					ws->send(jString);
+					ws->poll();
+					free(jString);
+				}
 			}
 
 			//Barrack Creation Button
@@ -358,6 +333,22 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 					quit = QUIT_HUD;
 
 				createBarrack(game, target, peasantId);
+
+				sendedEvent.roomId = room.roomId;
+				sendedEvent.type = M_CREATE_BARRACK;
+				sendedEvent.unitId = peasantId;
+				sendedEvent.target.x = target.x;
+				sendedEvent.target.y = target.y;
+				sendedEvent.clientId = game->currentPlayer;
+
+				char * pseudo = (char*) malloc(75*sizeof(char));
+				strcpy(pseudo, readPseudo());
+				sendedEvent.playerInfos.pseudo = pseudo;
+				jString = serializeEvent(sendedEvent);
+
+				ws->send(jString);
+				ws->poll();
+				free(jString);
 			}
 
 			//Collect Button
@@ -371,7 +362,25 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 				if(quitGame)
 					quit = QUIT_HUD;
 
-				collect(game, peasantId, target);
+				int success = collect(game, peasantId, target);
+
+				if(success){
+					sendedEvent.roomId = room.roomId;
+					sendedEvent.type = M_HARVEST;
+					sendedEvent.unitId = peasantId;
+					sendedEvent.target.x = target.x;
+					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
+
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
+					jString = serializeEvent(sendedEvent);
+
+					ws->send(jString);
+					ws->poll();
+					free(jString);
+				}
 			}
 
 			//Tile selection for other HUD
@@ -382,13 +391,13 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 					switch(game->players[game->currentPlayer].units[tokenId].type){
 
 						case PEASANT:
-						quitGame = peasantHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+						quitGame = mPeasantHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 						quit = 1;	//This Hud will also be quitted with the "child"
 						newEvent = 0;	//Avoids screen refreshing and all previous menus appearing for a frame
 						break;
 
 						case SOLDIER:
-						quitGame = soldierHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+						quitGame = mSoldierHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 						quit = 1;
 						newEvent = 0;
 						break;
@@ -397,21 +406,17 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 				else if(checkOwnBuilding(*game, selectedTile) < game->players[game->currentPlayer].nBuildings){	//Cycles buildingss
 					tokenId = checkOwnBuilding(*game, selectedTile);
 					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+							quitGame = mBuildingHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 							quit = 1;
 							newEvent = 0;
-
-
 					}
 				}
 				else if(checkOwnUnit(*game, selectedTile) < game->players[game->currentPlayer].nUnits){	//Cycles buildingss
 					tokenId = checkOwnBuilding(*game, selectedTile);
 					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+							quitGame = mBuildingHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 							quit = 1;
 							newEvent = 0;
-
-
 					}
 				}
 				//Foreign unit selection
@@ -440,7 +445,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 		//Refresh
 		if(newEvent){
-			peasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId);
+			mPeasantDisplay(renderer, texture, *game, *camera, *countdownSec, peasantId, readPseudo());
 		}
 	}
 
@@ -452,7 +457,7 @@ int peasantHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 
 //Soldier Hud
-int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int soldierId){
+int mSoldierHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int soldierId){
 	srand(time(NULL));
 
 	int soundId = rand()%2;
@@ -464,6 +469,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 	music = Mix_LoadMUS(soundPath);
 	Mix_PlayMusic( music, 1);
 
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
@@ -472,8 +478,10 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 	coord selectedTile;
 	coord target;
 	coord * path = NULL;
+	mEvent sendedEvent;
+	char * jString;
 
-	soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
+	mSoldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId, readPseudo());
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -511,6 +519,22 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 					movementAnim(renderer, texture, camera, game, path, length, soldierId);
 					free(path);
 
+					sendedEvent.roomId = room.roomId;
+					sendedEvent.type = M_MOVEMENT;
+					sendedEvent.unitId = soldierId;
+					sendedEvent.target.x = target.x;
+					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
+
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
+					jString = serializeEvent(sendedEvent);
+
+					ws->send(jString);
+					ws->poll();
+					free(jString);
+
 					target.x = 0;
 					target.y = 0;
 				}
@@ -526,7 +550,25 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 				if(quitGame)
 					quit = QUIT_HUD;
 
-				attack(game, soldierId, target);
+				int success = attack(game, soldierId, target);
+
+				if(success){
+					sendedEvent.roomId = room.roomId;
+					sendedEvent.type = M_ATTACK;
+					sendedEvent.unitId = soldierId;
+					sendedEvent.target.x = target.x;
+					sendedEvent.target.y = target.y;
+					sendedEvent.clientId = game->currentPlayer;
+
+					char * pseudo = (char*) malloc(75*sizeof(char));
+					strcpy(pseudo, readPseudo());
+					sendedEvent.playerInfos.pseudo = pseudo;
+					jString = serializeEvent(sendedEvent);
+
+					ws->send(jString);
+					ws->poll();
+					free(jString);
+				}
 			}
 
 			//Tile selection for other HUD
@@ -537,13 +579,13 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 					switch(game->players[game->currentPlayer].units[tokenId].type){
 
 						case PEASANT:
-						quitGame = peasantHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+						quitGame = mPeasantHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 						quit = 1;	//This Hud will also be quitted with the "child"
 						newEvent = 0;	//Avoids screen refreshing and all previous menus appearing for a frame
 						break;
 
 						case SOLDIER:
-						quitGame = soldierHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+						quitGame = mSoldierHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 						quit = 1;
 						newEvent = 0;
 						break;
@@ -552,21 +594,17 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 				else if(checkOwnBuilding(*game, selectedTile) < game->players[game->currentPlayer].nBuildings){	//Cycles buildingss
 					tokenId = checkOwnBuilding(*game, selectedTile);
 					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+							quitGame = mBuildingHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 							quit = 1;
 							newEvent = 0;
-
-
 					}
 				}
 				else if(checkOwnUnit(*game, selectedTile) < game->players[game->currentPlayer].nUnits){	//Cycles buildingss
 					tokenId = checkOwnBuilding(*game, selectedTile);
 					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+							quitGame = mBuildingHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 							quit = 1;
 							newEvent = 0;
-
-
 					}
 				}
 				//Foreign unit selection
@@ -595,7 +633,7 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 		//Refresh
 		if(newEvent){
-			soldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId);
+			mSoldierDisplay(renderer, texture, *game, *camera, *countdownSec, soldierId, readPseudo());
 		}
 	}
 
@@ -607,27 +645,32 @@ int soldierHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * gam
 
 
 //Building Hud
-int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int buildingId){
+int mBuildingHud(easywsclient::WebSocket * ws, room room, SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int buildingId){
 
 	Mix_Music * music = NULL;
 	if(game->players[game->currentPlayer].buildings[buildingId].type == BARRACK)
-		music = Mix_LoadMUS("resources/sounds/barrack_select.mp3");
+			music = Mix_LoadMUS("resources/sounds/barrack_select.mp3");
 	else
 		music = Mix_LoadMUS("resources/sounds/city_select1.mp3");
 
 	Mix_PlayMusic( music, 1);
 
+
 	SDL_Event event;
 	int quit = 0;
 	int quitGame = 0;	//Return value (quits the entire game)
 	int newEvent = 0;
+	int success = 0;
 
 	coord selectedTile;
 	coord target;
 	//int tokenId;
 	//int ownerId;
 
-	buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+	mEvent sendedEvent;
+	char * jString;
+
+	mBuildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId, readPseudo());
 
 	while(!quit){
 		SDL_Delay(REFRESH_PERIOD);
@@ -652,7 +695,6 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 			}
 
 			//Create unit button
-			//Attack Button
 			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
 			&& event.button.x>SCREEN_WIDTH/2-TILE_SIZE*1.75/2 && event.button.x<SCREEN_WIDTH/2+TILE_SIZE*1.75/2
 			&& event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.75 && event.button.y<SCREEN_HEIGHT){
@@ -665,11 +707,49 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 
 				switch(game->players[game->currentPlayer].buildings[buildingId].type){
 					case CITY:
-						createPeasant(game, target, buildingId);
+						success = createPeasant(game, target, buildingId);
+
+						if(success){
+							sendedEvent.roomId = room.roomId;
+							sendedEvent.type = M_CREATE_PEASANT;
+							sendedEvent.unitId = buildingId;
+							sendedEvent.target.x = target.x;
+							sendedEvent.target.y = target.y;
+							sendedEvent.clientId = game->currentPlayer;
+
+							char * pseudo = (char*) malloc(75*sizeof(char));
+							strcpy(pseudo, readPseudo());
+							sendedEvent.playerInfos.pseudo = pseudo;
+							jString = serializeEvent(sendedEvent);
+
+							ws->send(jString);
+							ws->poll();
+							free(jString);
+						}
+
 						break;
 
 					case BARRACK:
-						createSoldier(game, target, buildingId);
+						success = createSoldier(game, target, buildingId);
+
+						if(success){
+							sendedEvent.roomId = room.roomId;
+							sendedEvent.type = M_CREATE_SOLDIER;
+							sendedEvent.unitId = buildingId;
+							sendedEvent.target.x = target.x;
+							sendedEvent.target.y = target.y;
+							sendedEvent.clientId = game->currentPlayer;
+
+							char * pseudo = (char*) malloc(75*sizeof(char));
+							strcpy(pseudo, readPseudo());
+							sendedEvent.playerInfos.pseudo = pseudo;
+							jString = serializeEvent(sendedEvent);
+
+							ws->send(jString);
+							ws->poll();
+							free(jString);
+						}
+
 						break;
 				}
 			}
@@ -682,13 +762,13 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 					switch(game->players[game->currentPlayer].units[tokenId].type){
 
 						case PEASANT:
-						quitGame = peasantHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+						quitGame = mPeasantHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 						quit = 1;	//This Hud will also be quitted with the "child"
 						newEvent = 0;	//Avoids screen refreshing and all previous menus appearing for a frame
 						break;
 
 						case SOLDIER:
-						quitGame = soldierHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+						quitGame = mSoldierHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 						quit = 1;
 						newEvent = 0;
 						break;
@@ -697,7 +777,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 				else if(checkOwnBuilding(*game, selectedTile) < game->players[game->currentPlayer].nBuildings){	//Cycles buildingss
 					tokenId = checkOwnBuilding(*game, selectedTile);
 					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+							quitGame = mBuildingHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 							quit = 1;
 							newEvent = 0;
 
@@ -707,7 +787,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 				else if(checkOwnUnit(*game, selectedTile) < game->players[game->currentPlayer].nUnits){	//Cycles buildingss
 					tokenId = checkOwnBuilding(*game, selectedTile);
 					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
+							quitGame = mBuildingHud(ws, room, renderer, texture, game, camera, countdown, countdownSec, tokenId);
 							quit = 1;
 							newEvent = 0;
 
@@ -740,7 +820,7 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 
 		//Refresh
 		if(newEvent){
-			buildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId);
+			mBuildingDisplay(renderer, texture, *game, *camera, *countdownSec, buildingId, readPseudo());
 		}
 	}
 
@@ -750,229 +830,152 @@ int buildingHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * ga
 }
 
 
+//Foreign Hud
+//Ingame events listening
 
-//Target selection HUD
-int targetHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int isMovement, coord pos, coord * target){
-	//General selection Hud used to retrieve clicked tile
+class inGameIntermediary {
+public:
+	struct game * game;
+	SDL_Renderer * renderer;
+	SDL_Texture * texture;
+	view * camera;
+	int * quit;
+	mEvent event;
+	int ownSlot;
+
+    void callbackInGame(const std::string & message, mEvent event, SDL_Renderer * renderer, SDL_Texture * texture, view * camera, int * quit, int ownSlot){
+
+        //Checking if game is starting
+        json_object * json = json_tokener_parse(&message[0]);
+        json_object * jType = json_object_object_get(json, "type");
+		int length;
+
+        //If receiving a typed event
+        if(jType != NULL){
+            int type = json_object_get_int(jType);
+			mEvent event = parseEvent(&message[0]);
+            free(jType);
+
+			switch(type){
+				case M_MOVEMENT:
+					coord * path;
+					length = moveUnit(game, event.unitId, event.target, &path);
+					if(length){
+						movementAnim(renderer, texture, camera, game, path, length, event.unitId);
+						free(path);
+					}
+					break;
+
+				case M_ATTACK:
+					attack(game, event.unitId, event.target);
+					break;
+
+				case M_CREATE_PEASANT:
+					createPeasant(game, event.target, event.unitId);
+					break;
+
+				case M_CREATE_SOLDIER:
+					createSoldier(game, event.target, event.unitId);
+					break;
+
+				case M_CREATE_BARRACK:
+					createBarrack(game, event.target, event.unitId);
+					break;
+
+				case M_HARVEST:
+					collect(game, event.unitId, event.target);
+					break;
+
+
+				case PLAYER_LEAVE_GAME:
+				case PLAYER_LEAVE_ROOM:
+					//This will quit the foreignHud function
+						*quit = 1;
+					break;
+
+				case M_END_TURN:
+					if(ownSlot != event.clientId){
+						*quit = 1;
+					}
+					break;
+			}
+
+        }
+
+    }
+};
+
+
+class inGameFunctor {
+  public:
+      inGameIntermediary * instance;
+
+    inGameFunctor(inGameIntermediary * instance) : instance(instance) {
+    }
+    void operator()(const std::string& message) {
+		//TODO Set parameters properly
+        instance->callbackInGame(message, instance->event, instance->renderer, instance->texture, instance->camera, instance->quit, instance->ownSlot);
+    }
+};
+
+
+
+//In this funcion, we can move the camera & access menu only. Game will check for updates coming from server
+int mEnemyPlayerHud(easywsclient::WebSocket * ws, room room,SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int ownSlot){
 
 	SDL_Event event;
 	int quit = 0;
-	int quitGame = 0;	//Return value (quits the entire game)
 	int newEvent = 0;
 
 	coord selectedTile;
-	//int tokenId;
-	//int ownerId;
 
-	targetDisplay(renderer, texture, *game, *camera, *countdownSec, isMovement, pos);
+	int countdown = TURN_TIME * 1000;	//30 sec in ms
+	int countdownSec = TURN_TIME; //Approx in sec for display
 
-	while(!quit){
+	int quitGame = 0;
+
+	inGameIntermediary instance;
+	instance.game = game;
+	instance.renderer = renderer;
+	instance.texture = texture;
+	instance.camera = camera;
+	instance.quit = &quit;
+	instance.ownSlot = ownSlot;
+
+	inGameFunctor functor(&instance);
+
+	//First display before any event
+	//XXXFucking bus error
+	mBasicDisplay(renderer, texture, *game, *camera, countdownSec, 0, room.players[game->currentPlayer].pseudo);
+	SDL_RenderPresent(renderer);
+
+    while(ws->getReadyState() != easywsclient::WebSocket::CLOSED && !quit){
+		ws->poll();
 		SDL_Delay(REFRESH_PERIOD);
+		ws->dispatch(functor);
 
-		//Events
-		while(SDL_PollEvent(&event)){
-			newEvent = events(event, camera, *game, &selectedTile);
+        while(SDL_PollEvent(&event)){
+            newEvent = events(event, camera, *game, &selectedTile);
 
-			//Menu
-			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, *game);
-				camera->leftClick = 0;
-				if(quitGame == QUIT_PROGRAM || quitGame == QUIT_GAME){
-					quit = quitGame;
-				}
-			}
+            switch(newEvent){
+                case MENU:
+                    quitGame = inGameMenu(renderer, *game);
+					if(quitGame)
+						quit = QUIT_HUD;
 
-			//Cancel button
-			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x>SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.5){
-				quit = QUIT_HUD;
-			}
-
-			else if(newEvent == TILE_SELECTION){
-				*target = selectedTile;
-				quit = QUIT_HUD;
-			}
-
-			//Tile selection for other HUD
-			else if(newEvent == TILE_SELECTION){
-				//Own unit
-				int tokenId = checkOwnUnit(*game, selectedTile);
-				if(tokenId < game->players[game->currentPlayer].nUnits){	//Cycles units
-					switch(game->players[game->currentPlayer].units[tokenId].type){
-
-						case PEASANT:
-						quitGame = peasantHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
-						quit = 1;	//This Hud will also be quitted with the "child"
-						newEvent = 0;	//Avoids screen refreshing and all previous menus appearing for a frame
-						break;
-
-						case SOLDIER:
-						quitGame = soldierHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
-						quit = 1;
-						newEvent = 0;
-						break;
-					}
-				}
-				else if(checkOwnBuilding(*game, selectedTile) < game->players[game->currentPlayer].nBuildings){	//Cycles buildingss
-					tokenId = checkOwnBuilding(*game, selectedTile);
-					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
-							quit = 1;
-							newEvent = 0;
-
-
-					}
-				}
-				else if(checkOwnUnit(*game, selectedTile) < game->players[game->currentPlayer].nUnits){	//Cycles buildingss
-					tokenId = checkOwnBuilding(*game, selectedTile);
-					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
-							quit = 1;
-							newEvent = 0;
-
-
-					}
-				}
-				//Foreign unit selection
-				else{
-
-					int ownerId;
-					int isUnit = 1;
-					tokenId = checkForeignUnit(*game, selectedTile, &ownerId);
-					if(ownerId > game->nPlayers){
-						tokenId = checkForeignBuilding(*game, selectedTile, &ownerId);
-						isUnit = 0;
-					}
-
-
-					if(ownerId < game->nPlayers){
-						quitGame = foreignHud(renderer, texture, game, camera, countdown, countdownSec, ownerId, tokenId, isUnit);
-						quit = 1;
-						newEvent = 0;
-					}
-				}
+					camera->leftClick = 0;	//Avoids moving camera if menu entered w click and left with Escp
+                    break;
 			}
 		}
 
-		//Countdown
-		quit = countdownUpdate(countdown, countdownSec, quit, &newEvent, game);
+		countdownUpdate(&countdown, &countdownSec, quit, &newEvent, game);
 
-		//Refresh
-		if(newEvent){
-			targetDisplay(renderer, texture, *game, *camera, *countdownSec, isMovement, pos);
+        if(newEvent){  //Refresh display if a new event has occured
+			mBasicDisplay(renderer, texture, *game, *camera, countdownSec, 0, room.players[game->currentPlayer].pseudo);
+			SDL_RenderPresent(renderer);
+			newEvent = 0;
 		}
-	}
-
-	return quitGame;
-}
-
-
-
-//Foreign Token Hud
-int foreignHud(SDL_Renderer * renderer, SDL_Texture * texture, struct game * game, view * camera, int * countdown, int * countdownSec, int ownerId, int tokenId, int isUnit){
-	int quit = 0;
-	int quitGame = 0;	//Return value (quits the entire game)
-	int newEvent = 0;
-	SDL_Event event;
-
-	coord selectedTile;
-	//int tokenId;
-	//int ownerId;
-
-
-	foreignDisplay(renderer, texture, *game, *camera, *countdownSec, ownerId, tokenId, isUnit);
-
-	while(!quit){
-		SDL_Delay(REFRESH_PERIOD);
-
-		//Events
-		while(SDL_PollEvent(&event)){
-			newEvent = events(event, camera, *game, &selectedTile);
-
-			//Menu
-			if(newEvent == MENU){
-				quitGame = inGameMenu(renderer, *game);
-				quit = quitGame;
-				camera->leftClick = 0;
-				if(quitGame)
-					quit = QUIT_HUD;
-			}
-
-			//Cancel button
-			else if(event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT
-			&& event.button.x>SCREEN_WIDTH-TILE_SIZE*1.5 && event.button.y>SCREEN_HEIGHT-TILE_SIZE*1.5){
-				quit = QUIT_HUD;
-			}
-
-			//Tile selection for other HUD
-			else if(newEvent == TILE_SELECTION){
-				//Own unit
-				int tokenId = checkOwnUnit(*game, selectedTile);
-				if(tokenId < game->players[game->currentPlayer].nUnits){	//Cycles units
-					switch(game->players[game->currentPlayer].units[tokenId].type){
-
-						case PEASANT:
-						quitGame = peasantHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
-						quit = 1;	//This Hud will also be quitted with the "child"
-						newEvent = 0;	//Avoids screen refreshing and all previous menus appearing for a frame
-						break;
-
-						case SOLDIER:
-						quitGame = soldierHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
-						quit = 1;
-						newEvent = 0;
-						break;
-					}
-				}
-				else if(checkOwnBuilding(*game, selectedTile) < game->players[game->currentPlayer].nBuildings){	//Cycles buildingss
-					tokenId = checkOwnBuilding(*game, selectedTile);
-					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
-							quit = 1;
-							newEvent = 0;
-
-
-					}
-				}
-				else if(checkOwnUnit(*game, selectedTile) < game->players[game->currentPlayer].nUnits){	//Cycles buildingss
-					tokenId = checkOwnBuilding(*game, selectedTile);
-					if(tokenId < game->players[game->currentPlayer].nBuildings){
-							quitGame = buildingHud(renderer, texture, game, camera, countdown, countdownSec, tokenId);
-							quit = 1;
-							newEvent = 0;
-
-
-					}
-				}
-				//Foreign unit selection
-				else{
-
-					int ownerId;
-					int isUnit = 1;
-					tokenId = checkForeignUnit(*game, selectedTile, &ownerId);
-					if(ownerId > game->nPlayers){
-						tokenId = checkForeignBuilding(*game, selectedTile, &ownerId);
-						isUnit = 0;
-					}
-
-
-					if(ownerId < game->nPlayers){
-						quitGame = foreignHud(renderer, texture, game, camera, countdown, countdownSec, ownerId, tokenId, isUnit);
-						quit = 1;
-						newEvent = 0;
-					}
-				}
-			}
-		}
-
-		//Countdown
-		quit = countdownUpdate(countdown, countdownSec, quit, &newEvent, game);
-
-		//Refresh
-		if(newEvent){
-			foreignDisplay(renderer, texture, *game, *camera, *countdownSec, ownerId, tokenId, isUnit);
-		}
-	}
+    }
 
 	return quitGame;
 }

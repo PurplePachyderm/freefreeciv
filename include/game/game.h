@@ -98,15 +98,17 @@ struct game{
     int nPlayers;
     int currentPlayer;
 
-    struct struct map map;
+    struct map map;
 };
 
 
     //Prototypes
-int checkOwnBuilding(struct game, coord pos);
-int checkOwnUnit(struct game, coord pos);
+int checkOwnBuilding(struct game game, coord pos);
+int checkOwnUnit(struct game game, coord pos);
 
-int checkForeignBuilding(struct game, coord pos, int * ownerId);
-int checkForeignUnit(struct game, coord pos, int * ownerId);
+int checkForeignBuilding(struct game game, coord pos, int * ownerId);
+int checkForeignUnit(struct game game, coord pos, int * ownerId);
 
-void busyReset(struct struct game * game);
+void busyReset(struct game * game);
+
+void freeGame(struct game * game);

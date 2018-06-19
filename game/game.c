@@ -7,7 +7,7 @@
 
  //Checks for the presence of one of current player's buildings on a tile
  //(returns size of buildings array if none has been found)
-int checkOwnBuilding(struct struct game game, coord pos){
+int checkOwnBuilding(struct game game, coord pos){
     int buildingFound = 0;
     int buildingId;
 
@@ -28,7 +28,7 @@ int checkOwnBuilding(struct struct game game, coord pos){
 
 
 //Same for units
-int checkOwnUnit(struct struct game game, coord pos){
+int checkOwnUnit(struct game game, coord pos){
     int unitFound = 0;
     int unitId;
 
@@ -49,7 +49,7 @@ int checkOwnUnit(struct struct game game, coord pos){
 
 //Checks for foreign building on a tile (returns building id, ownerId is modified too)
 //ownerId takes size of players array if none has been found
-int checkForeignBuilding(struct struct game game, coord pos, int * ownerId){
+int checkForeignBuilding(struct game game, coord pos, int * ownerId){
     int buildingFound = 0;
     int buildingId;
 
@@ -84,7 +84,7 @@ int checkForeignBuilding(struct struct game game, coord pos, int * ownerId){
 
 
 //Same for units
-int checkForeignUnit(struct struct game game, coord pos, int * ownerId){
+int checkForeignUnit(struct game game, coord pos, int * ownerId){
     int unitFound = 0;
     int unitId;
 
@@ -118,14 +118,31 @@ int checkForeignUnit(struct struct game game, coord pos, int * ownerId){
 
 
 
-void busyReset(struct struct game * game){
+void busyReset(struct game * game){
     //Sets all isBusy to 0 (to be called at beginning of turn) & resets movements
-    for(int i=0; i<game->players[game->currentPlayer].nUnits; i++){
-        game->players[game->currentPlayer].units[i].isBusy = 0;
-        game->players[game->currentPlayer].units[i].movements = game->players[game->currentPlayer].units[i].maxMovements;
+    for(int i=0; i<game->nPlayers; i++){
+        for(int j=0; j<game->players[i].nUnits; j++){
+            game->players[i].units[j].isBusy = 0;
+            game->players[i].units[j].movements = game->players[i].units[j].maxMovements;
+        }
+
+        for(int j=0; j<game->players[i].nBuildings; j++){
+            game->players[i].buildings[j].isBusy = 0;
+        }
+    }
+}
+
+
+
+void freeGame(struct game * game){
+    //Free tokens/players
+    for(int i=0; i<game->nPlayers; i++){
+        free(game->players[i].units);
+        free(game->players[i].buildings);
     }
 
-    for(int i=0; i<game->players[game->currentPlayer].nBuildings; i++){
-        game->players[game->currentPlayer].buildings[i].isBusy = 0;
-    }
+    free(game->players);
+
+    //Free map
+    free(game->map.resources);
 }
