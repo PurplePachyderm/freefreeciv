@@ -10,7 +10,7 @@
 [json-c](https://github.com/json-c/json-c),
 [curl](https://curl.haxx.se/)
 
-FFC is also including the [easywsclient](https://github.com/dhbaird/easywsclient) and the [QR Code generator (C++)] (https://www.nayuki.io/page/qr-code-generator-library) libraries released under MIT license
+FFC is also including the [easywsclient](https://github.com/dhbaird/easywsclient) and the [QR Code generator (C++)](https://www.nayuki.io/page/qr-code-generator-library) libraries released under MIT license
 
 ### Credits
 #### Sprites
